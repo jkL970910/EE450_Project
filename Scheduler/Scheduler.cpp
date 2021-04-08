@@ -22,8 +22,8 @@ using namespace std;
 #define SERVERA_PORT_NUM 30991
 #define HOSTNAME "127.0.0.1"
 
-// Communicate with backend_serverA and backend_serverB
-class BackendServer
+// Communicate with hospital_serverA and hospital_serverB
+class HospitalServer
 {
     private: 
     int sockfd, port_num;
@@ -38,13 +38,14 @@ class BackendServer
     }
 
     public:
-    string getBuffer()
+    string bufferMessage()
     {
-        // convert the char to string and return buffer
+        // convert the char to string
         string sb = buffer;
         return sb;
     }
 
+    // block the UDP send/receive function with the hospital_server
     void send()
     {
         int res = sendto(sockfd, buffer, 256, 0, (sockaddr*) &remote_addr, sockaddr_in_length);
@@ -78,7 +79,7 @@ class BackendServer
     {
         this -> port_num = port_num;
 
-        // remote address serverA or serverB
+        // remote address for each hospital servers
         remote_addr.sin_family = AF_INET;
         remote_addr.sin_port = htons(port_num);
         remote_addr.sin_addr.s_addr = inet_addr(HOSTNAME);
@@ -99,14 +100,14 @@ class BackendServer
 
         bzero(buffer, 256);
 
-        // this sentence has no real function, only because UDP server has to boot up first and unfreeze him in while(1)
+        // this sentence has no real function, only because UDP server has to boot up first and unfreeze in while(1)
         send();
 
         receive(); // get responsible 
     }
 };
 
-static BackendServer serverA;
+static HospitalServer serverA, serverB, serverC;
 
 // Communicate with client
 class Client
@@ -188,10 +189,12 @@ class Client
 
 int main()
 {
-    fprintf(stderr, "The Main server is up and running.\n");
-    serverA.connnect(SERVERA_PORT_NUM);
-    
     fprintf(stderr, "The Scheduler is up and running.\n");
+    
+    serverA.connnect(SERVERA_PORT_NUM);
+    fprintf(stderr, "The Scheduler is connecting to HospitalA.\n");
+    // serverA.MessageToHospitalMap();
+    
     Client client;
     client.connectClient();
 }
