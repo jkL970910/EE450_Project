@@ -14,8 +14,7 @@
 #define HOSTNAME "127.0.0.1"
 using namespace std;
 
-class SchedulerMain
-{
+class SchedulerMain {
     private:
     int sockfd, port_num; // sockfd == sock file descriptor
     struct sockaddr_in remote_addr;
@@ -25,22 +24,19 @@ class SchedulerMain
     int client_id;
 
     // print error message relating to socket usage
-    void Error(char *msg)
-    {
+    void Error(char *msg) {
         perror(msg);
         exit(0);
     }
 
     public:
-    void connectServer()
-    {
+    void connectServer() {
         // set port number
         port_num = TCP_PORT_NUM;
 
         // create socket
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        if (sockfd < 0)
-        {
+        if (sockfd < 0) {
             Error((char*)"Error opening socket");
         }
 
@@ -51,16 +47,14 @@ class SchedulerMain
 
         remote_sockaddr_length = sizeof(remote_addr);
         int res = connect(sockfd, (struct sockaddr *)&remote_addr, remote_sockaddr_length);
-        if(res < 0) 
-        {
+        if(res < 0) {
             Error((char*)"ERROR connecting");
         }
 
         fprintf(stderr, "Client is up and running\n");
     }
 
-    void queryHospital()
-    {
+    void queryHospital() {
         string user_id, message;
         fprintf(stderr, "-----Start a new request-----\n");
         fprintf(stderr, "Please enter the User ID: ");
@@ -74,8 +68,7 @@ class SchedulerMain
         // send query to schedulermain
         int res = write(sockfd, buffer, strlen(buffer));
 
-        if (res < 0)
-        {
+        if (res < 0) {
             Error((char*)"ERROR writing to socket");
         }
         fprintf(stderr, "Client has sent Message<%s> to Scheduler using TCP\n", user_id.c_str());
@@ -83,8 +76,7 @@ class SchedulerMain
         // get result from schedulermain
         bzero(buffer, strlen(buffer));
         res = read(sockfd, buffer, 256);
-        if (res < 0)
-        {
+        if (res < 0) {
             Error((char*)"ERROR reading from socket");
         }
 
@@ -93,14 +85,12 @@ class SchedulerMain
     }
 };
 
-int main()
-{
+int main() {
     SchedulerMain schedulermain;
     schedulermain.connectServer();
 
-    while(1)
-    {
+    while(1) {
         schedulermain.queryHospital();
     }
-
+    
 }
