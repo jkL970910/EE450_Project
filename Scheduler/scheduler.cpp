@@ -29,6 +29,9 @@ class HospitalServer {
     struct sockaddr_in remote_addr, local_addr;
     socklen_t sockaddr_in_length;
     char buffer[256];
+    // using a 2-D array to store the basic info of each hospital
+    // 0 ~ 2 stands for hospitalA ~ C, [][0] - location, [][1] - capacity, [][2] - occupancy
+    int hospitals[3][3]; 
 
     void Error(char* msg) {
         perror(msg);
@@ -93,6 +96,29 @@ class HospitalServer {
         send();
 
         receive(); // get responsible 
+    }
+
+    void messageToHospitalMap(int count) {
+        int i = 0;
+        int j = 0;
+        string str;
+        while (buffer[i] != '\0') {
+            while (buffer[i] == ' ') {
+                i++;
+            }
+            while (buffer[i] != ' ') {
+                str = str + buffer[i++];
+            }
+            
+            hospitals[count][j++] = atoi(str.c_str());
+            str = "";
+        }
+        // switch(count) {
+        //     case 0: fprintf(stderr, "the scheduler has initialized hospitalA: \n"); break;
+        //     case 1: fprintf(stderr, "the scheduler has initialized hospitalB: \n"); break;
+        //     case 2: fprintf(stderr, "the scheduler has initialized hospitalC: \n"); break;
+        // }
+        
     }
 };
 
@@ -172,7 +198,7 @@ int main() {
     
     hospitalA.connnect(SERVERA_PORT_NUM);
     fprintf(stderr, "The Scheduler is connecting to HospitalA.\n");
-    // serverA.MessageToHospitalMap();
+    hospitalA.messageToHospitalMap(0);
     
     Client client;
     client.connectClient();

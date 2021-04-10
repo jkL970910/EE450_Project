@@ -30,6 +30,7 @@ class Hospital {
     int location; // the location on the map
     int capacity; // initial capacity of the hospital
     int occupancy; // inital occupancy of the hospital
+    bool map_loaded; // set the flag whether the map is constructed successful
     
     tr1::unordered_map<int, int> hospital_relocation_mapping; // store re_indexed_location, convert original location to re_indexed location. Eg. (78 => 0), (2 => 1).
     tr1::unordered_map<int, tr1::unordered_map<int, float>> matrix; // store the neighbors of each edges and their distances
@@ -37,20 +38,24 @@ class Hospital {
 
     public:
     // preparation: store the map.txt
-    void setLocation(int location) {
-        this -> location = location;
-    }
-
-    void setCapacity(int capacity) {
+    void setCapAndOcc(int capacity, int occupancy) {
         this -> capacity = capacity;
+        this -> occupancy = occupancy;
     }
 
-    void setOccupancy(int occupancy) {
+    void setInfo(int location, int capacity, int occupancy, bool map_loaded) {
+        this -> location = location;
+        this -> capacity = capacity;
         this -> occupancy = occupancy;
+        this -> map_loaded = map_loaded;
     }
 
     string getHospitalInfo() {
         return to_string(this->location) + " " + to_string(this->capacity) + " " + to_string(this->occupancy);
+    }
+
+    bool getMapLoad() {
+        return this->map_loaded;
     }
 
     // set re_indexed_map
@@ -99,9 +104,7 @@ class Hospital {
         cout << "the format is: '<hospitalA location> <total capacity> <initial occupancy>': " << endl;
         int location, capacity, occupancy;
         cin >> location >> capacity >> occupancy;
-        setLocation(location);
-        setCapacity(capacity);
-        setOccupancy(occupancy);
+        setInfo(location, capacity, occupancy, true);
     }
 };
 
@@ -199,7 +202,7 @@ class File {
     }
     
     // read the map.txt and store the nums into matrix
-    void getAdjacencyMatrix(Hospital& hospital) {   
+    void getMapMatrix(Hospital& hospital) {   
         while (fgets(cache, fsize, fp)) {
             float single_row_location_info[3];
             for (int i = 0; i < 3; i++) {
@@ -216,7 +219,7 @@ class File {
         file.open();
 
         file.reIndexHospitalLocation(hospital);
-        file.getAdjacencyMatrix(hospital);
+        file.getMapMatrix(hospital);
         fprintf(stderr, "The server A has constructed the map\n");
         hospital.initialize();
         
@@ -282,12 +285,12 @@ class SchedulerMain {
                 Error((char*)"recvfrom");
             }
             
-            if (send_lock == false) { // if it is the first time sending message to server main, first time send responsible hospitals
+            if (send_lock == false && hospital.getMapLoad() == true) { // if the map is loaded and initialized, sent the info to scheduler
                 message = hospital.getHospitalInfo();
                 sendResponsibleHospitals(message);
                 send_lock = true;
             }
-            else { // non first time, send recommendation
+            else { // non first time, send recommendation hospital location
                 message = query_user_id;
 
                 int res = sendto(sockfd, message.c_str(), message.size(), 0, (struct sockaddr *)&remote_addr, remote_sockaddr_length);
