@@ -18,12 +18,13 @@
 #include <iostream>
 using namespace std;
 
-#define SERVERA_PORT_NUM 30991
+#define HOSPITALA_PORT_NUM 30864
+#define UDP_PORT_NUM 33864
 #define HOSTNAME "127.0.0.1"
 #define FILENAME "map_simple.txt"
 #define MAX_LOCATION_NUM 100
 
-static string query_user_id; // message of userid from Scheduler, backend server will give location based on this userid
+static string client_location; // message of userid from Scheduler, backend server will give location based on this userid
 
 class Hospital {
     private:
@@ -33,7 +34,7 @@ class Hospital {
     bool map_loaded; // set the flag whether the map is constructed successful
     
     tr1::unordered_map<int, int> hospital_relocation_mapping; // store re_indexed_location, convert original location to re_indexed location. Eg. (78 => 0), (2 => 1).
-    tr1::unordered_map<int, tr1::unordered_map<int, float>> matrix; // store the neighbors of each edges and their distances
+    tr1::unordered_map<int, tr1::unordered_map<int, float> > matrix; // store the neighbors of each edges and their distances
     set<int> avaliableHospital; // store the avaliable hospital locations on the map
 
     public:
@@ -51,7 +52,7 @@ class Hospital {
     }
 
     string getHospitalInfo() {
-        return to_string(this->location) + " " + to_string(this->capacity) + " " + to_string(this->occupancy);
+        return to_string(this->capacity) + " " + to_string(this->occupancy);
     }
 
     bool getMapLoad() {
@@ -234,14 +235,13 @@ class SchedulerMain {
     struct sockaddr_in remote_addr, local_addr;
     socklen_t remote_sockaddr_length, local_sockaddr_length;
     char buffer[1024];
-    bool send_lock;
 
     void Error(char *msg) {
         perror(msg);
         exit(0);
     }
 
-    void sendResponsibleHospitals(string message) {
+    void sendInitHospitals(string message) {
         char server_message[message.length()];
         strcpy(server_message, message.c_str());
 
@@ -263,9 +263,14 @@ class SchedulerMain {
         local_sockaddr_length = sizeof(local_addr);
         bzero(&local_addr, local_sockaddr_length);
 
+        // remote address
+        remote_addr.sin_family = AF_INET;
+        remote_addr.sin_port = htons(UDP_PORT_NUM);
+        remote_addr.sin_addr.s_addr = inet_addr(HOSTNAME);
+
         // local address
         local_addr.sin_family = AF_INET;
-        local_addr.sin_port = htons(SERVERA_PORT_NUM);
+        local_addr.sin_port = htons(HOSPITALA_PORT_NUM);
         local_addr.sin_addr.s_addr = inet_addr(HOSTNAME);
 
         int res = bind(sockfd, (struct sockaddr *)&local_addr, local_sockaddr_length);
@@ -275,29 +280,39 @@ class SchedulerMain {
         
         remote_sockaddr_length = sizeof(struct sockaddr_in);
 
-        fprintf(stderr, "The server A is up and running using UDP on port <%d>\n", SERVERA_PORT_NUM);
+        fprintf(stderr, "The server A is up and running using UDP on port <%d>\n", HOSPITALA_PORT_NUM);
+        
+        // initial the hospital info and send to scheduler
+        string message = hospital.getHospitalInfo();
+        sendInitHospitals(message);
+        
         while (1) {
             string message;
+
+            // receive client info from the scheduler
             bzero(&buffer, 1024);
-            // this sentence has no real function, only because UDP server has to boot up first and freeze in while(1)
-            res = recvfrom(sockfd, buffer, 1024, 0, (struct sockaddr *)&remote_addr, &remote_sockaddr_length);
+            int res = recvfrom(sockfd, buffer, 1024, 0, (struct sockaddr*)&remote_addr, &remote_sockaddr_length);
             if (res < 0) {
                 Error((char*)"recvfrom");
             }
             
-            if (send_lock == false && hospital.getMapLoad() == true) { // if the map is loaded and initialized, sent the info to scheduler
-                message = hospital.getHospitalInfo();
-                sendResponsibleHospitals(message);
-                send_lock = true;
-            }
-            else { // non first time, send recommendation hospital location
-                message = query_user_id;
+            message = client_location;
 
-                int res = sendto(sockfd, message.c_str(), message.size(), 0, (struct sockaddr *)&remote_addr, remote_sockaddr_length);
-                if (res < 0) {
-                    Error((char*)"sendto");
-                }
-                fprintf(stderr, "The server A has sent the result(s) to Scheduler\n");
+            // TODO: do the DFS to find the shortest location score
+
+
+            // send the score to the scheduler
+            res = sendto(sockfd, message.c_str(), message.size(), 0, (struct sockaddr *)&remote_addr, remote_sockaddr_length);
+            if (res < 0) {
+                Error((char*)"sendto");
+            }
+            fprintf(stderr, "The server A has sent the result(s) to Scheduler\n");
+
+            // TODO: receive the scheduler's response and update the map
+            bzero(&buffer, 1024);
+            res = recvfrom(sockfd, buffer, 1024, 0, (struct sockaddr*)&remote_addr, &remote_sockaddr_length);
+            if (res < 0) {
+                Error((char*)"recvfrom");
             }
         }
     }

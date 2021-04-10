@@ -1,4 +1,3 @@
-/* UDP client in the internet domain */
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -17,9 +16,11 @@
 #include <string>
 using namespace std;
 
-#define TCP_PORT_NUM 33991
-#define UDP_PORT_NUM 32991
-#define SERVERA_PORT_NUM 30991
+#define TCP_PORT_NUM 34864
+#define UDP_PORT_NUM 33864
+#define HOSPITALA_PORT_NUM 30864
+#define HOSPITALB_PORT_NUM 31864
+#define HOSPITALC_PORT_NUM 32864
 #define HOSTNAME "127.0.0.1"
 
 // Communicate with hospitalA
@@ -30,8 +31,8 @@ class HospitalServer {
     socklen_t sockaddr_in_length;
     char buffer[256];
     // using a 2-D array to store the basic info of each hospital
-    // 0 ~ 2 stands for hospitalA ~ C, [][0] - location, [][1] - capacity, [][2] - occupancy
-    int hospitals[3][3]; 
+    // 0 ~ 1 stands for hospitalA ~ C, [][0] - capacity, [][1] - occupancy
+    int hospitals[3][2]; 
 
     void Error(char* msg) {
         perror(msg);
@@ -69,7 +70,7 @@ class HospitalServer {
 
     }
 
-    void connnect(int port_num) {
+    void connnect(int port_num, int count) {
         this -> port_num = port_num;
 
         // remote address for each hospital servers
@@ -79,8 +80,8 @@ class HospitalServer {
 
         // local address
         local_addr.sin_family = AF_INET;
-	    local_addr.sin_port = htons(UDP_PORT_NUM);
-	    local_addr.sin_addr.s_addr = inet_addr(HOSTNAME);
+            local_addr.sin_port = htons(UDP_PORT_NUM);
+            local_addr.sin_addr.s_addr = inet_addr(HOSTNAME);
 
         sockfd = socket(AF_INET, SOCK_DGRAM, 0);
         if(sockfd < 0) {
@@ -90,15 +91,15 @@ class HospitalServer {
         sockaddr_in_length = sizeof(struct sockaddr_in);
         bind(sockfd, (struct sockaddr*) & local_addr, sockaddr_in_length); // set Scheduler port number as 32XXX
 
-        bzero(buffer, 256);
-
-        // this sentence has no real function, only because UDP server has to boot up first and unfreeze in while(1)
-        send();
-
-        receive(); // get responsible 
+        getInitHospital(count);
     }
 
-    void messageToHospitalMap(int count) {
+    void getInitHospital(int count) {
+        
+        bzero(buffer, 256);
+        fprintf(stderr, "scheduler is listening to hospitalA\n");
+        receive(); // get responsible 
+        
         int i = 0;
         int j = 0;
         string str;
@@ -106,19 +107,27 @@ class HospitalServer {
             while (buffer[i] == ' ') {
                 i++;
             }
-            while (buffer[i] != ' ') {
+            while (buffer[i] != ' ' && buffer[i] != '\0') {
                 str = str + buffer[i++];
             }
             
             hospitals[count][j++] = atoi(str.c_str());
             str = "";
         }
-        // switch(count) {
-        //     case 0: fprintf(stderr, "the scheduler has initialized hospitalA: \n"); break;
-        //     case 1: fprintf(stderr, "the scheduler has initialized hospitalB: \n"); break;
-        //     case 2: fprintf(stderr, "the scheduler has initialized hospitalC: \n"); break;
-        // }
-        
+        switch(count) {
+            case 0: 
+                fprintf(stderr, "the scheduler has initialized hospitalA using UDP through port: %d\n", HOSPITALA_PORT_NUM); 
+                fprintf(stderr, "the capacity of HospitalA is: %d, the occupancy of HospitalA is: %d\n", hospitals[count][0], hospitals[count][1]);
+                break;
+            case 1: 
+                fprintf(stderr, "the scheduler has initialized hospitalB using UDP through port: %d\n", HOSPITALB_PORT_NUM); 
+                fprintf(stderr, "the capacity of HospitalA is: %d, the occupancy of HospitalA is: %d\n", hospitals[count][0], hospitals[count][1]);
+                break;
+            case 2: 
+                fprintf(stderr, "the scheduler has initialized hospitalC using UDP through port: %d\n", HOSPITALC_PORT_NUM); 
+                fprintf(stderr, "the capacity of HospitalA is: %d, the occupancy of HospitalA is: %d\n", hospitals[count][0], hospitals[count][1]);
+                break;
+        }
     }
 };
 
@@ -130,30 +139,27 @@ class Client {
     int sockfd, newsockfd, port_num;
     struct sockaddr_in remote_addr, local_addr;
     socklen_t remote_sockaddr_length, local_sockaddr_length;
+    char buffer[256];
+    char copy[256];
 
     void Error(char *msg) {
         perror(msg);
         exit(0);
     }
-    
-    void HandleRequest (int sock) {
 
-        char buffer[256];
-        char copy[256];
+    void readFromClient(int sock) {
         bzero(buffer,256);
-        bzero(copy,256);
         int res = read(sock, buffer, 255);
         if (res < 0) {
             Error((char*)"ERROR reading from socket");
         }
-        strcpy(copy, buffer);
-        bzero(buffer,256);
-        strcpy(buffer, copy);
-        res = write(sock, buffer, 256);
+    }
+
+    void sendToClient(int sock) {
+        int res = write(sock, buffer, 256);
         if (res < 0) {
             Error((char*)"ERROR writing to socket");
         }
-        fprintf(stderr, "Client has sent Message<%s> to Scheduler using TCP\n", buffer);
     }
 
     public:
@@ -178,8 +184,16 @@ class Client {
         }
 
         // start listening to client socket
+        fprintf(stderr, "scheduler is listening to client through TCP at port: %d\n", TCP_PORT_NUM);
         listen(sockfd, 5);
+    }
 
+    int getClientLocation() {
+        readFromClient(newsockfd);
+        return atoi(buffer);
+    }
+
+    void connectConfirm() {
         remote_sockaddr_length = sizeof(remote_addr);
         
         newsockfd = accept(sockfd, (struct sockaddr *) &remote_addr, &remote_sockaddr_length);
@@ -187,19 +201,29 @@ class Client {
             Error((char*)"ERROR on accept");
         }
 
-        while(1) HandleRequest(newsockfd);
-        
-        exit(0);
+        readFromClient(newsockfd);
+        fprintf(stderr, "scheduler is connection to client througth TCP at port: %d\n", TCP_PORT_NUM);
+    }
+
+    void send() {
+        sendToClient(newsockfd);
     }
 };
+
+static Client client;
 
 int main() {
     fprintf(stderr, "The Scheduler is up and running.\n");
     
-    hospitalA.connnect(SERVERA_PORT_NUM);
-    fprintf(stderr, "The Scheduler is connecting to HospitalA.\n");
-    hospitalA.messageToHospitalMap(0);
-    
-    Client client;
+    hospitalA.connnect(HOSPITALA_PORT_NUM, 0);
+
+    // connect to TCP and get reply from hospitals
     client.connectClient();
+    client.connectConfirm();
+    
+    while(1) {
+        int location = client.getClientLocation();
+        cout << location << endl;
+        client.send();
+    }
 }

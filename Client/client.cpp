@@ -10,7 +10,7 @@
 #include <string.h>
 #include <string>
 #include <iostream>
-#define TCP_PORT_NUM 33991
+#define TCP_PORT_NUM 34864
 #define HOSTNAME "127.0.0.1"
 using namespace std;
 
@@ -54,6 +54,15 @@ class SchedulerMain {
         fprintf(stderr, "Client is up and running\n");
     }
 
+    void connectConfirm() {
+        fprintf(stderr, "Client is connection to scheduler througth TCP at port: %d\n", TCP_PORT_NUM);
+        int res = write(sockfd, buffer, 256);
+
+        if (res < 0) {
+            Error((char*)"ERROR writing to socket");
+        }
+    }
+
     void queryHospital() {
         string user_id, message;
         fprintf(stderr, "-----Start a new request-----\n");
@@ -88,6 +97,7 @@ class SchedulerMain {
 int main() {
     SchedulerMain schedulermain;
     schedulermain.connectServer();
+    schedulermain.connectConfirm();
 
     while(1) {
         schedulermain.queryHospital();
