@@ -18,7 +18,7 @@
 #include <iostream>
 using namespace std;
 
-#define HOSPITALA_PORT_NUM 30864
+#define HOSPITALB_PORT_NUM 31864
 #define UDP_PORT_NUM 33864
 #define HOSTNAME "127.0.0.1"
 #define FILENAME "map_simple.txt"
@@ -100,7 +100,7 @@ class Hospital {
     }
 
     void initialize() {
-        cout << "please enter the initial capacity and occupancy of HospitalA: " << endl;
+        cout << "please enter the initial capacity and occupancy of HospitalB: " << endl;
         cout << "the format is: '<hospital location> <total capacity> <initial occupancy>': " << endl;
         int location, capacity, occupancy;
         cin >> location >> capacity >> occupancy;
@@ -270,7 +270,7 @@ class File {
 
         file.reIndexHospitalLocation(hospital);
         file.getMapMatrix(hospital);
-        fprintf(stderr, "The hospitalA has constructed the map\n");
+        fprintf(stderr, "The hospitalB has constructed the map\n");
         // hospital.testReIndex();
         // hospital.testMap();
         hospital.initialize();
@@ -327,7 +327,7 @@ class SchedulerMain {
 
         // local address
         local_addr.sin_family = AF_INET;
-        local_addr.sin_port = htons(HOSPITALA_PORT_NUM);
+        local_addr.sin_port = htons(HOSPITALB_PORT_NUM);
         local_addr.sin_addr.s_addr = inet_addr(HOSTNAME);
 
         int res = bind(sockfd, (struct sockaddr *)&local_addr, local_sockaddr_length);
@@ -337,12 +337,12 @@ class SchedulerMain {
         
         remote_sockaddr_length = sizeof(struct sockaddr_in);
 
-        fprintf(stderr, "The hospitalA is up and running using UDP on port <%d>\n", HOSPITALA_PORT_NUM);
+        fprintf(stderr, "The hospitalB is up and running using UDP on port <%d>\n", HOSPITALB_PORT_NUM);
         
         // initial the hospital info and send to scheduler
         string message = hospital.getHospitalInfo();
         sendHospitalMessages(message);
-        fprintf(stderr, "The hospitalA has sent its inital info to the Scheduler\n");
+        fprintf(stderr, "The hospitalB has sent its inital info to the Scheduler\n");
         
         while (1) {
             // receive client info from the scheduler
@@ -364,10 +364,10 @@ class SchedulerMain {
 
 int main() {
     File map;
-    Hospital hospitalA;
+    Hospital hospitalB;
     SchedulerMain schedulermain;
 
-    map.construct(hospitalA);
+    map.construct(hospitalB);
 
-    schedulermain.connectScheduler(hospitalA);
+    schedulermain.connectScheduler(hospitalB);
 }

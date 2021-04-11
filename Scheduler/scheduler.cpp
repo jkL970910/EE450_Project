@@ -64,7 +64,6 @@ class HospitalServer {
         if (res < 0) {
             Error((char*)"recvfrom");
         }
-
     }
 
     void connnect(int port_num, int count) {
@@ -94,7 +93,6 @@ class HospitalServer {
     void getInitHospital(int count) {
         
         bzero(buffer, 256);
-        fprintf(stderr, "scheduler is listening to hospitalA\n");
         receive();
         
         int i = 0;
@@ -126,9 +124,16 @@ class HospitalServer {
                 break;
         }
     }
+
+    float getScore() {
+        bzero(buffer, 256);
+        receive();
+
+        return atof(buffer);
+    }
 };
 
-static HospitalServer hospitalA;
+static HospitalServer hospitalA, hospitalB, hospitalC;
 
 // Communicate with client
 class Client {
@@ -192,7 +197,7 @@ class Client {
         if (newsockfd < 0) {
             Error((char*)"ERROR on accept");
         }
-        fprintf(stderr, "scheduler is connection to client througth TCP at port: %d\n", TCP_PORT_NUM);
+        fprintf(stderr, "scheduler is connecting to client througth TCP at port: %d\n", TCP_PORT_NUM);
     }
 
     int getClientLocation() {
@@ -210,7 +215,11 @@ static Client client;
 int main() {
     fprintf(stderr, "The Scheduler is up and running.\n");
     
+    // 0: hospitalA, 1: hospitalB, 2: hospitalC
+    fprintf(stderr, "scheduler is listening to hospitals\n");
     hospitalA.connnect(HOSPITALA_PORT_NUM, 0);
+    hospitalB.connnect(HOSPITALB_PORT_NUM, 1);
+    hospitalC.connnect(HOSPITALC_PORT_NUM, 2);
 
     // connect to TCP and get reply from hospitals
     client.connectClient();
@@ -222,8 +231,16 @@ int main() {
         // send the message to the three hospitals
         fprintf(stderr, "the scheduler start quering for the hospitals\n");
         hospitalA.send(to_string(location));
+        hospitalB.send(to_string(location));
+        hospitalC.send(to_string(location));
 
-        // TODO: receive the score from the hospitals
+        // receive the score from the hospitals
+        float scoreA = hospitalA.getScore();
+        fprintf(stderr, "the score of hospitalA is: %g\n", scoreA);
+        float scoreB = hospitalB.getScore();
+        fprintf(stderr, "the score of hospitalB is: %g\n", scoreB);
+        float scoreC = hospitalC.getScore();
+        fprintf(stderr, "the score of hospitalC is: %g\n", scoreC);
 
         // TODO: determine which hospital to be selected
 
