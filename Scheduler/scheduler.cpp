@@ -40,12 +40,6 @@ class HospitalServer {
     }
 
     public:
-    string bufferMessage() {
-        // convert the char to string
-        string sb = buffer;
-        return sb;
-    }
-
     // block the UDP send/receive function with the hospital
     void send() {
         int res = sendto(sockfd, buffer, 256, 0, (sockaddr*) &remote_addr, sockaddr_in_length);
@@ -54,8 +48,11 @@ class HospitalServer {
         }
     }
 
-    void send(char* message) {
-        int res = sendto(sockfd, message, 256, 0, (sockaddr*) &remote_addr, sockaddr_in_length);
+    void send(string message) {
+        char hospital_message[message.length()];
+        strcpy(hospital_message, message.c_str());
+
+        int res = sendto(sockfd, hospital_message, 256, 0, (sockaddr*) &remote_addr, sockaddr_in_length);
         if (res < 0) {
             Error((char*)"sendto");
         }
@@ -98,7 +95,7 @@ class HospitalServer {
         
         bzero(buffer, 256);
         fprintf(stderr, "scheduler is listening to hospitalA\n");
-        receive(); // get responsible 
+        receive();
         
         int i = 0;
         int j = 0;
@@ -219,8 +216,20 @@ int main() {
     client.connectClient();
     
     while(1) {
+        // receive the location from the client
         int location = client.getClientLocation();
-        cout << location << endl;
+
+        // send the message to the three hospitals
+        fprintf(stderr, "the scheduler start quering for the hospitals\n");
+        hospitalA.send(to_string(location));
+
+        // TODO: receive the score from the hospitals
+
+        // TODO: determine which hospital to be selected
+
+        // TODO: send the update info to the hospitals
+        
+        // send the selected hospital to the client
         client.send(to_string(location));
     }
 }

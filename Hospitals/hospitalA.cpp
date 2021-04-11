@@ -23,57 +23,56 @@ using namespace std;
 #define HOSTNAME "127.0.0.1"
 #define FILENAME "map_simple.txt"
 #define MAX_LOCATION_NUM 100
+#define FLT_MAX 3.402823466e+38F
 
 static string client_location; // message of userid from Scheduler, backend server will give location based on this userid
 
 class Hospital {
     private:
     int location; // the location on the map
+    int re_location;
     int capacity; // initial capacity of the hospital
     int occupancy; // inital occupancy of the hospital
-    bool map_loaded; // set the flag whether the map is constructed successful
     
     tr1::unordered_map<int, int> hospital_relocation_mapping; // store re_indexed_location, convert original location to re_indexed location. Eg. (78 => 0), (2 => 1).
-    tr1::unordered_map<int, tr1::unordered_map<int, float> > matrix; // store the neighbors of each edges and their distances
-    set<int> avaliableHospital; // store the avaliable hospital locations on the map
+    tr1::unordered_map<int, tr1::unordered_map<int, float> > matrix; // store the neighbors of each edges and their distances   
 
     public:
-    // preparation: store the map.txt
-    void setCapAndOcc(int capacity, int occupancy) {
+    // preparation: store and construct the map.txt
+    void setInfo(int capacity, int occupancy) {
         this -> capacity = capacity;
         this -> occupancy = occupancy;
     }
 
-    void setInfo(int location, int capacity, int occupancy, bool map_loaded) {
+    void setInfo(int location, int capacity, int occupancy) {
         this -> location = location;
+        this -> re_location = getRelocation(location);
         this -> capacity = capacity;
         this -> occupancy = occupancy;
-        this -> map_loaded = map_loaded;
     }
 
     string getHospitalInfo() {
         return to_string(this->capacity) + " " + to_string(this->occupancy);
     }
 
-    bool getMapLoad() {
-        return this->map_loaded;
-    }
-
     // set re_indexed_map
-    void setLocationMap(int location, int re_location) {
+    void setReIndexMap(int location, int re_location) {
         hospital_relocation_mapping.insert(pair<int, int>(location, re_location));
     }
 
+    // avoid duplicating reIndex
     bool hasReloNum(int location) {
         if (hospital_relocation_mapping.find(location) != hospital_relocation_mapping.end()) return true;
         return false;
     }
 
+    // get reIndex location by client location
     int getRelocation(int location) {
         if (hospital_relocation_mapping.find(location) == hospital_relocation_mapping.end()) return -1; // locatioin not find
         else return hospital_relocation_mapping[location];
     }
 
+    // get client location by reIndex location
     int getLocation(int re_location) {
         for (pair<int,int> p : hospital_relocation_mapping)
         {
@@ -105,7 +104,72 @@ class Hospital {
         cout << "the format is: '<hospitalA location> <total capacity> <initial occupancy>': " << endl;
         int location, capacity, occupancy;
         cin >> location >> capacity >> occupancy;
-        setInfo(location, capacity, occupancy, true);
+        setInfo(location, capacity, occupancy);
+    }
+
+    void testReIndex() {
+        for (pair<int, int> p : hospital_relocation_mapping) {
+            cout << "origin: " << p.first << "reIndex: " << p.second << endl;
+        }
+    }
+
+    void testMap() {
+        for (pair<int, tr1::unordered_map<int, float>> p : matrix) {
+            cout << p.first << endl;
+            for (pair<int, float> q : p.second) {
+                cout << "key" << endl;
+                cout << q.first << endl;
+                cout << "value" << endl;
+                cout << q.second << endl;
+            }
+            cout << " one pair" << endl;
+        }
+    }
+
+    float getAvailability() {
+        return (this->capacity - this->occupancy) / (float)this->capacity;
+    }
+
+    float shortestPath(int reIndex) {
+        if (reIndex == this->re_location) return 0;
+        
+        float shortest = FLT_MAX;
+        float current = 0;
+        bool visited[hospital_relocation_mapping.size()] = {0};
+        visited[reIndex] = true;
+        helper(shortest, current, visited, reIndex);
+        cout << "shortest path is: " << shortest << endl;
+        return shortest;
+    }
+
+    // helper function of DFS
+    void helper(float& shortest, float& current, bool* visited, int index) {
+        if (index == this->re_location) {
+            shortest = min(shortest, current);
+            return;
+        }
+        
+        for (pair<int, float> p : matrix[index]) {
+            if (!visited[p.first]) {
+                visited[p.first] = true;
+                float temp = current;
+                current = current + p.second;
+                helper(shortest, current, visited, p.first);
+                current = temp;
+                visited[p.first] = false;
+            }
+        }
+    }
+
+    float findLocationScore(int location) {
+        float a = getAvailability();
+        float d;
+        a = (a < 0 || a > 1) ? -1 : a;
+        int reIndex = getRelocation(location);
+        if (reIndex == -1) d = -1;
+        if (a == -1 || d == -1) return -1; 
+        d = shortestPath(reIndex);
+        return 1 / (d * (1.1 - a));
     }
 };
 
@@ -166,9 +230,9 @@ class File {
             int locationNum[2];
             bufferToLocationNum(cache, locationNum);
             if (hospital.hasReloNum(locationNum[0])) continue;
-            else hospital.setLocationMap(locationNum[0], reNum++);
+            else hospital.setReIndexMap(locationNum[0], reNum++);
             if (hospital.hasReloNum(locationNum[1])) continue;
-            else hospital.setLocationMap(locationNum[1], reNum++);
+            else hospital.setReIndexMap(locationNum[1], reNum++);
         }
         rewind(fp);
     }
@@ -215,6 +279,7 @@ class File {
         rewind(fp);
     }
 
+    // the whole step to read and initalize the map structure
     void ready(Hospital& hospital) {
         File file;
         file.open();
@@ -222,10 +287,14 @@ class File {
         file.reIndexHospitalLocation(hospital);
         file.getMapMatrix(hospital);
         fprintf(stderr, "The server A has constructed the map\n");
+        // hospital.testReIndex();
+        // hospital.testMap();
         hospital.initialize();
         
         file.close();
     }
+
+
 };
 
 // UDP connection to Scheduler
@@ -287,7 +356,7 @@ class SchedulerMain {
         sendInitHospitals(message);
         
         while (1) {
-            string message;
+            int location;
 
             // receive client info from the scheduler
             bzero(&buffer, 1024);
@@ -296,34 +365,35 @@ class SchedulerMain {
                 Error((char*)"recvfrom");
             }
             
-            message = client_location;
+            location = atoi(buffer);
 
             // TODO: do the DFS to find the shortest location score
-
+            float score = hospital.findLocationScore(location);
+            cout << "the score is: " << score << endl;
 
             // send the score to the scheduler
-            res = sendto(sockfd, message.c_str(), message.size(), 0, (struct sockaddr *)&remote_addr, remote_sockaddr_length);
-            if (res < 0) {
-                Error((char*)"sendto");
-            }
-            fprintf(stderr, "The server A has sent the result(s) to Scheduler\n");
+            // res = sendto(sockfd, message.c_str(), message.size(), 0, (struct sockaddr *)&remote_addr, remote_sockaddr_length);
+            // if (res < 0) {
+            //     Error((char*)"sendto");
+            // }
+            // fprintf(stderr, "The server A has sent the result(s) to Scheduler\n");
 
             // TODO: receive the scheduler's response and update the map
-            bzero(&buffer, 1024);
-            res = recvfrom(sockfd, buffer, 1024, 0, (struct sockaddr*)&remote_addr, &remote_sockaddr_length);
-            if (res < 0) {
-                Error((char*)"recvfrom");
-            }
+            // bzero(&buffer, 1024);
+            // res = recvfrom(sockfd, buffer, 1024, 0, (struct sockaddr*)&remote_addr, &remote_sockaddr_length);
+            // if (res < 0) {
+            //     Error((char*)"recvfrom");
+            // }
         }
     }
 };
 
 int main() {
-    File file;
+    File map;
     Hospital A;
     SchedulerMain schedulermain;
 
-    file.ready(A);
+    map.ready(A);
 
     schedulermain.connectScheduler(A);
 }
