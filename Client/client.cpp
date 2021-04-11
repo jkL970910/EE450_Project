@@ -51,16 +51,7 @@ class SchedulerMain {
             Error((char*)"ERROR connecting");
         }
 
-        fprintf(stderr, "Client is up and running\n");
-    }
-
-    void connectConfirm() {
         fprintf(stderr, "Client is connection to scheduler througth TCP at port: %d\n", TCP_PORT_NUM);
-        int res = write(sockfd, buffer, 256);
-
-        if (res < 0) {
-            Error((char*)"ERROR writing to socket");
-        }
     }
 
     void queryHospital() {
@@ -75,7 +66,7 @@ class SchedulerMain {
         strcpy(buffer, message.c_str());
 
         // send query to schedulermain
-        int res = write(sockfd, buffer, strlen(buffer));
+        int res = write(sockfd, buffer, 256);
 
         if (res < 0) {
             Error((char*)"ERROR writing to socket");
@@ -83,7 +74,7 @@ class SchedulerMain {
         fprintf(stderr, "Client has sent Message<%s> to Scheduler using TCP\n", user_id.c_str());
 
         // get result from schedulermain
-        bzero(buffer, strlen(buffer));
+        bzero(buffer, 256);
         res = read(sockfd, buffer, 256);
         if (res < 0) {
             Error((char*)"ERROR reading from socket");
@@ -97,7 +88,6 @@ class SchedulerMain {
 int main() {
     SchedulerMain schedulermain;
     schedulermain.connectServer();
-    schedulermain.connectConfirm();
 
     while(1) {
         schedulermain.queryHospital();

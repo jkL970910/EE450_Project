@@ -149,13 +149,15 @@ class Client {
 
     void readFromClient(int sock) {
         bzero(buffer,256);
-        int res = read(sock, buffer, 255);
+        int res = read(sock, buffer, 256);
         if (res < 0) {
             Error((char*)"ERROR reading from socket");
         }
     }
 
-    void sendToClient(int sock) {
+    void sendToClient(int sock, string message) {
+        bzero(buffer,256);
+        strcpy(buffer, message.c_str());
         int res = write(sock, buffer, 256);
         if (res < 0) {
             Error((char*)"ERROR writing to socket");
@@ -186,6 +188,14 @@ class Client {
         // start listening to client socket
         fprintf(stderr, "scheduler is listening to client through TCP at port: %d\n", TCP_PORT_NUM);
         listen(sockfd, 5);
+
+        remote_sockaddr_length = sizeof(remote_addr);
+        
+        newsockfd = accept(sockfd, (struct sockaddr *) &remote_addr, &remote_sockaddr_length);
+        if (newsockfd < 0) {
+            Error((char*)"ERROR on accept");
+        }
+        fprintf(stderr, "scheduler is connection to client througth TCP at port: %d\n", TCP_PORT_NUM);
     }
 
     int getClientLocation() {
@@ -193,20 +203,8 @@ class Client {
         return atoi(buffer);
     }
 
-    void connectConfirm() {
-        remote_sockaddr_length = sizeof(remote_addr);
-        
-        newsockfd = accept(sockfd, (struct sockaddr *) &remote_addr, &remote_sockaddr_length);
-        if (newsockfd < 0) {
-            Error((char*)"ERROR on accept");
-        }
-
-        readFromClient(newsockfd);
-        fprintf(stderr, "scheduler is connection to client througth TCP at port: %d\n", TCP_PORT_NUM);
-    }
-
-    void send() {
-        sendToClient(newsockfd);
+    void send(string message) {
+        sendToClient(newsockfd, message);
     }
 };
 
@@ -219,11 +217,10 @@ int main() {
 
     // connect to TCP and get reply from hospitals
     client.connectClient();
-    client.connectConfirm();
     
     while(1) {
         int location = client.getClientLocation();
         cout << location << endl;
-        client.send();
+        client.send(to_string(location));
     }
 }
