@@ -44,11 +44,12 @@ class Hospital {
         this -> occupancy = occupancy;
     }
 
-    void setInfo(int location, int capacity, int occupancy) {
+    void setInfo(int location, int capacity, char occupancy) {
         this -> location = location;
         this -> re_location = getRelocation(location);
         this -> capacity = capacity;
         this -> occupancy = occupancy;
+        cout << this->location << " " << this->capacity << " " << this->occupancy << endl;
     }
 
     string getHospitalInfo() {
@@ -99,12 +100,8 @@ class Hospital {
         }
     }
 
-    void initialize() {
-        cout << "please enter the initial capacity and occupancy of HospitalA: " << endl;
-        cout << "the format is: '<hospital location> <total capacity> <initial occupancy>': " << endl;
-        int location, capacity, occupancy;
-        cin >> location >> capacity >> occupancy;
-        setInfo(location, capacity, occupancy);
+    void initialize(char* argv[]) {
+        setInfo(atoi(argv[1]), atoi(argv[2]), atoi(argv[3]));
     }
 
     float getAvailability() {
@@ -271,9 +268,6 @@ class File {
         file.reIndexHospitalLocation(hospital);
         file.getMapMatrix(hospital);
         fprintf(stderr, "The hospitalA has constructed the map\n");
-        // hospital.testReIndex();
-        // hospital.testMap();
-        hospital.initialize();
         
         file.close();
     }
@@ -362,12 +356,20 @@ class SchedulerMain {
     }
 };
 
-int main() {
+int main(int argc, char* argv[]) {
     File map;
     Hospital hospitalA;
     SchedulerMain schedulermain;
 
-    map.construct(hospitalA);
+    if (argc < 4) {
+        fprintf(stderr, "you mush input all the three of the hospital, as '<hospital location> <total capacity> <initial occupancy>'\n");
+        exit(0);
+    }
 
+    // initialize the location, capacity & occupancy of the hospitalA
+    hospitalA.initialize(argv);
+    // construct the map and store in hospitalA
+    map.construct(hospitalA);
+    // connect to the scheduler using UDP
     schedulermain.connectScheduler(hospitalA);
 }

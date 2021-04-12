@@ -54,13 +54,10 @@ class SchedulerMain {
         fprintf(stderr, "Client is connection to scheduler througth TCP at port: %d\n", TCP_PORT_NUM);
     }
 
-    void queryHospital() {
-        string user_id, message;
-        fprintf(stderr, "-----Start a new request-----\n");
-        fprintf(stderr, "Please enter the User ID: ");
-        cin >> user_id;
+    void queryHospital(string location) {
+        string message;
 
-        message += user_id;
+        message += location;
 
         bzero(buffer,256);    
         strcpy(buffer, message.c_str());
@@ -71,7 +68,7 @@ class SchedulerMain {
         if (res < 0) {
             Error((char*)"ERROR writing to socket");
         }
-        fprintf(stderr, "Client has sent Message<%s> to Scheduler using TCP\n", user_id.c_str());
+        fprintf(stderr, "Client has sent location <%s> to Scheduler using TCP\n", location.c_str());
 
         // get result from schedulermain
         bzero(buffer, 256);
@@ -85,12 +82,13 @@ class SchedulerMain {
     }
 };
 
-int main() {
+int main(int argc, char* argv[]) {
     SchedulerMain schedulermain;
-    schedulermain.connectServer();
-
-    while(1) {
-        schedulermain.queryHospital();
+    if (argc < 2) {
+        fprintf(stderr, "please enter the location: ");
+        exit(0);
     }
-    
+    string location = argv[1];
+    schedulermain.connectServer();
+    schedulermain.queryHospital(location);
 }

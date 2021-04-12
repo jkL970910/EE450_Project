@@ -23,21 +23,42 @@ using namespace std;
 #define HOSPITALC_PORT_NUM 32864
 #define HOSTNAME "127.0.0.1"
 
-// Communicate with hospitalA
+static struct sockaddr_in local_addr;
+static int sockfd;
+static socklen_t sockaddr_in_length;
+// using a 2-D array to store the basic info of each hospital
+// 0 ~ 1 stands for hospitalA ~ C, [][0] - capacity, [][1] - occupancy
+static int hospitals[3][2];
+
+void Error(char* msg) {
+    perror(msg);
+    exit(0);
+}
+
+// set the local_UDP_addr of the scheduler
+void bind() {
+    // local address
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_port = htons(UDP_PORT_NUM);
+    local_addr.sin_addr.s_addr = inet_addr(HOSTNAME);
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sockfd < 0) {
+        Error((char*)"socket");
+    }
+
+    sockaddr_in_length = sizeof(struct sockaddr_in);
+    bind(sockfd, (struct sockaddr*) & local_addr, sockaddr_in_length);
+}
+
+
+
+// Communicate with hospitals
 class HospitalServer {
     private: 
-    int sockfd, port_num;
-    struct sockaddr_in remote_addr, local_addr;
-    socklen_t sockaddr_in_length;
+    int port_num;
+    struct sockaddr_in remote_addr;
     char buffer[256];
-    // using a 2-D array to store the basic info of each hospital
-    // 0 ~ 1 stands for hospitalA ~ C, [][0] - capacity, [][1] - occupancy
-    int hospitals[3][2]; 
-
-    void Error(char* msg) {
-        perror(msg);
-        exit(0);
-    }
 
     public:
     // block the UDP send/receive function with the hospital
@@ -67,25 +88,10 @@ class HospitalServer {
     }
 
     void connnect(int port_num, int count) {
-        this -> port_num = port_num;
-
         // remote address for each hospital servers
         remote_addr.sin_family = AF_INET;
         remote_addr.sin_port = htons(port_num);
         remote_addr.sin_addr.s_addr = inet_addr(HOSTNAME);
-
-        // local address
-        local_addr.sin_family = AF_INET;
-            local_addr.sin_port = htons(UDP_PORT_NUM);
-            local_addr.sin_addr.s_addr = inet_addr(HOSTNAME);
-
-        sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-        if(sockfd < 0) {
-            Error((char*)"socket");
-        }
-
-        sockaddr_in_length = sizeof(struct sockaddr_in);
-        bind(sockfd, (struct sockaddr*) & local_addr, sockaddr_in_length); // set Scheduler port number as 32XXX
 
         getInitHospital(count);
     }
@@ -215,34 +221,36 @@ static Client client;
 int main() {
     fprintf(stderr, "The Scheduler is up and running.\n");
     
-    // 0: hospitalA, 1: hospitalB, 2: hospitalC
+    // build up UDP port
+    bind();
     fprintf(stderr, "scheduler is listening to hospitals\n");
+
+    // 0: hospitalA, 1: hospitalB, 2: hospitalC
     hospitalA.connnect(HOSPITALA_PORT_NUM, 0);
     hospitalB.connnect(HOSPITALB_PORT_NUM, 1);
     hospitalC.connnect(HOSPITALC_PORT_NUM, 2);
-
-    // connect to TCP and get reply from hospitals
-    client.connectClient();
     
     while(1) {
-        // receive the location from the client
+        // connect to TCP and receive the location from the client
+        client.connectClient();
         int location = client.getClientLocation();
-
-        // send the message to the three hospitals
         fprintf(stderr, "the scheduler start quering for the hospitals\n");
-        hospitalA.send(to_string(location));
-        hospitalB.send(to_string(location));
-        hospitalC.send(to_string(location));
 
-        // receive the score from the hospitals
+        // // receive the score from the hospitals 
+        hospitalA.send(to_string(location));
         float scoreA = hospitalA.getScore();
         fprintf(stderr, "the score of hospitalA is: %g\n", scoreA);
+        
+        hospitalB.send(to_string(location));
         float scoreB = hospitalB.getScore();
         fprintf(stderr, "the score of hospitalB is: %g\n", scoreB);
+        
+        hospitalC.send(to_string(location));
         float scoreC = hospitalC.getScore();
         fprintf(stderr, "the score of hospitalC is: %g\n", scoreC);
 
         // TODO: determine which hospital to be selected
+        // int selectedLocation = selectHospital(scoreA, scoreB, scoreC);
 
         // TODO: send the update info to the hospitals
         
