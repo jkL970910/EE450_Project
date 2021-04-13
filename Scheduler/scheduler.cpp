@@ -87,16 +87,15 @@ class HospitalServer {
         }
     }
 
-    void connnect(int port_num, int count) {
+    void connnectHospital(int port_num) {
         // remote address for each hospital servers
         remote_addr.sin_family = AF_INET;
         remote_addr.sin_port = htons(port_num);
         remote_addr.sin_addr.s_addr = inet_addr(HOSTNAME);
-
-        getInitHospital(count);
     }
 
-    void getInitHospital(int count) {
+    void getInitHospital(int port_num, int count) {
+        connnectHospital(port_num);
         
         bzero(buffer, 256);
         receive();
@@ -173,7 +172,7 @@ class Client {
     }
 
     public:
-    void connectClient() {
+    void bindClient() {
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
         if(sockfd < 0) {
             Error((char*)"ERROR opening socket");
@@ -192,7 +191,9 @@ class Client {
         if (res < 0) {
             Error((char*)"ERROR on binding");
         }
+    }
 
+    void connectClient() {
         // start listening to client socket
         fprintf(stderr, "scheduler is listening to client through TCP at port: %d\n", TCP_PORT_NUM);
         listen(sockfd, 5);
@@ -223,20 +224,22 @@ int main() {
     
     // build up UDP port
     bind();
-    fprintf(stderr, "scheduler is listening to hospitals\n");
+    fprintf(stderr, "scheduler is listening to hospitals through UDP at port: %d\n", UDP_PORT_NUM);
 
-    // 0: hospitalA, 1: hospitalB, 2: hospitalC
-    hospitalA.connnect(HOSPITALA_PORT_NUM, 0);
-    hospitalB.connnect(HOSPITALB_PORT_NUM, 1);
-    hospitalC.connnect(HOSPITALC_PORT_NUM, 2);
+    // get initial avaliability of hospitals
+    hospitalA.getInitHospital(HOSPITALA_PORT_NUM, 0);
+    hospitalB.getInitHospital(HOSPITALB_PORT_NUM, 1);
+    hospitalC.getInitHospital(HOSPITALC_PORT_NUM, 2);
+    
+    // connect to TCP and receive the location from the client
+    client.bindClient();
     
     while(1) {
-        // connect to TCP and receive the location from the client
         client.connectClient();
         int location = client.getClientLocation();
-        fprintf(stderr, "the scheduler start quering for the hospitals\n");
+        fprintf(stderr, "the scheduler get the client location %d and start quering for the hospitals\n", location);
 
-        // // receive the score from the hospitals 
+        // receive the score from the hospitals 
         hospitalA.send(to_string(location));
         float scoreA = hospitalA.getScore();
         fprintf(stderr, "the score of hospitalA is: %g\n", scoreA);
@@ -255,6 +258,7 @@ int main() {
         // TODO: send the update info to the hospitals
         
         // send the selected hospital to the client
+        
         client.send(to_string(location));
     }
 }

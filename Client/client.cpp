@@ -85,7 +85,7 @@ class SchedulerMain {
 int main(int argc, char* argv[]) {
     SchedulerMain schedulermain;
     if (argc < 2) {
-        fprintf(stderr, "please enter the location: ");
+        fprintf(stderr, "please enter the location\n");
         exit(0);
     }
     string location = argv[1];
