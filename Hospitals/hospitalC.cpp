@@ -366,10 +366,12 @@ int main(int argc, char* argv[]) {
         exit(0);
     }
 
-    // initialize the location, capacity & occupancy of the hospitalC
-    hospitalC.initialize(argv);
     // construct the map and store in hospitalC
     map.construct(hospitalC);
+
+    // initialize the location, capacity & occupancy of the hospitalC
+    hospitalC.initialize(argv);
+    
     // connect to the scheduler using UDP
     schedulermain.connectScheduler(hospitalC);
 }

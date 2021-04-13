@@ -345,6 +345,7 @@ class SchedulerMain {
             int location = atoi(buffer);
 
             // using DFS to find the shortest location score
+            fprintf(stderr, "the hospitalA has received client location: %d\n", location);
             float score = hospital.findLocationScore(location);
 
             // send the score to the scheduler
@@ -366,10 +367,12 @@ int main(int argc, char* argv[]) {
         exit(0);
     }
 
-    // initialize the location, capacity & occupancy of the hospitalA
-    hospitalA.initialize(argv);
     // construct the map and store in hospitalA
     map.construct(hospitalA);
+    
+    // initialize the location, capacity & occupancy of the hospitalA
+    hospitalA.initialize(argv);
+    
     // connect to the scheduler using UDP
     schedulermain.connectScheduler(hospitalA);
 }
