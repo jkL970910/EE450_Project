@@ -27,8 +27,12 @@ static struct sockaddr_in local_addr;
 static int sockfd;
 static socklen_t sockaddr_in_length;
 // using a 2-D array to store the basic info of each hospital
-// 0 ~ 1 stands for hospitalA ~ C, [][0] - capacity, [][1] - occupancy
-static int hospitals[3][2];
+// 0 ~ 2 stands for hospitalA ~ C, [][0] - location, [][1] - capacity, [][2] - occupancy
+static int hospitals[3][3];
+
+// using a 2-D array to store the score and distance of each hospital
+// 0 ~ 2 stands for hospitalA ~ C, [][0] - score, [][1] - distance
+static int hospitalsScore[3][2];
 
 void Error(char* msg) {
     perror(msg);
@@ -51,7 +55,9 @@ void bind() {
     bind(sockfd, (struct sockaddr*) & local_addr, sockaddr_in_length);
 }
 
-
+int selectHospital() {
+    
+}
 
 // Communicate with hospitals
 class HospitalServer {
@@ -130,11 +136,23 @@ class HospitalServer {
         }
     }
 
-    float getScore() {
+    float getScore(int count) {
         bzero(buffer, 256);
         receive();
-
-        return atof(buffer);
+        int i = 0;
+        int j = 0;
+        string str;
+        while (buffer[i] != '\0') {
+            while (buffer[i] == ' ') {
+                i++;
+            }
+            while (buffer[i] != ' ' && buffer[i] != '\0') {
+                str = str + buffer[i++];
+            }
+            
+            hospitals[count][j++] = atoi(str.c_str());
+            str = "";
+        }
     }
 };
 
@@ -240,25 +258,39 @@ int main() {
         fprintf(stderr, "the scheduler get the client location %d and start quering for the hospitals\n", location);
 
         // receive the score from the hospitals 
-        hospitalA.send(to_string(location));
-        float scoreA = hospitalA.getScore();
-        fprintf(stderr, "the score of hospitalA is: %g\n", scoreA);
+        if (hospitals[0][0] > hospitals[0][1]) {
+            hospitalA.send(to_string(location));
+            hospitalA.getScore(0);
+            fprintf(stderr, "the score of hospitalA is: %g\n", hospitalsScore[0][0]);
+        } else {
+            hospitalsScore[0][0] = -1;
+            fprintf(stderr, "the hospitalA is already full\n");
+        }
         
-        hospitalB.send(to_string(location));
-        float scoreB = hospitalB.getScore();
-        fprintf(stderr, "the score of hospitalB is: %g\n", scoreB);
+        if (hospitals[1][0] > hospitals[1][1]) {
+            hospitalB.send(to_string(location));
+            hospitalB.getScore(1);
+            fprintf(stderr, "the score of hospitalB is: %g\n", hospitalsScore[1][0]);
+        } else {
+            hospitalsScore[1][0] = -1;
+            fprintf(stderr, "the hospitalB is already full\n");
+        }
         
-        hospitalC.send(to_string(location));
-        float scoreC = hospitalC.getScore();
-        fprintf(stderr, "the score of hospitalC is: %g\n", scoreC);
+        if (hospitals[2][0] > hospitals[2][1]) {
+            hospitalC.send(to_string(location));
+            hospitalC.getScore(2);
+            fprintf(stderr, "the score of hospitalC is: %g\n", hospitalsScore[2][0]);
+        } else {
+            hospitalsScore[2][0] = -1;
+            fprintf(stderr, "the hospitalC is already full\n");
+        }
 
-        // TODO: determine which hospital to be selected
-        // int selectedLocation = selectHospital(scoreA, scoreB, scoreC);
+        // determine which hospital to be selected
+        int selectedLocation = selectHospital();
 
         // TODO: send the update info to the hospitals
         
         // send the selected hospital to the client
-        
         client.send(to_string(location));
     }
 }

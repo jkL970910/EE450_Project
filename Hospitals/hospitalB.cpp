@@ -26,6 +26,7 @@ using namespace std;
 #define FLT_MAX 3.402823466e+38F
 
 static string client_location; // message of userid from Scheduler, backend server will give location based on this userid
+static float hospitalScore[2]; // [0] stands for the score. [1] for the distances.
 
 class Hospital {
     private:
@@ -39,9 +40,8 @@ class Hospital {
 
     public:
     // preparation: store and construct the map.txt
-    void setInfo(int capacity, int occupancy) {
-        this -> capacity = capacity;
-        this -> occupancy = occupancy;
+    void updateOccupancy() {
+        this -> occupancy = this -> occupancy + 1;
     }
 
     void setInfo(int location, int capacity, char occupancy) {
@@ -53,7 +53,7 @@ class Hospital {
     }
 
     string getHospitalInfo() {
-        return to_string(this->capacity) + " " + to_string(this->occupancy);
+        return to_string(this->location) + " " + to_string(this->capacity) + " " + to_string(this->occupancy);
     }
 
     // set re_indexed_map
@@ -144,12 +144,13 @@ class Hospital {
         float d;
         a = (a < 0 || a > 1) ? -1 : a;
         int reIndex = getRelocation(location);
-        if (reIndex == -1) d = -1;
-        if (a == -1 || d == -1) {
+        if (reIndex == -1 || location == this->location) d = -1;
+        if (a == -1 || d == -1)  {
             fprintf(stderr, "the client location is not in the map\n");
+            hospitalScore[1] = -1;
             return -1; 
         }
-        d = shortestPath(reIndex);
+        hospitalScore[1] = shortestPath(reIndex);
         return 1 / (d * (1.1 - a));
     }
 };
@@ -345,13 +346,22 @@ class SchedulerMain {
             int location = atoi(buffer);
 
             // using DFS to find the shortest location score
-            float score = hospital.findLocationScore(location);
+            // socre = -1 stands for score = None
+            fprintf(stderr, "the hospitalB has received client location: %d\n", location);
+            hospitalScore[0] = hospital.findLocationScore(location);
+            string score = to_string(hospitalScore[0]) + " " + to_string(hospitalScore[1]);
 
             // send the score to the scheduler
-            sendHospitalMessages(to_string(score));
+            sendHospitalMessages(score);
 
             // receive the scheduler's response and update the map
-            // receiveSchedulerMessages();
+            // 1 stands for the hospital has been selected, 0 for not
+            receiveSchedulerMessages();
+            int chosen = atoi(buffer);
+
+            if (chosen == 1) {
+                hospital.updateOccupancy();
+            }
         }
     }
 };
