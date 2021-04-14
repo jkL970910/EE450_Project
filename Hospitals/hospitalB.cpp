@@ -43,7 +43,7 @@ class Hospital {
     void updateOccupancy() {
         this -> occupancy = this -> occupancy + 1;
         // on-screen message 9
-        fprintf(stderr, "Hospital B has been assigned to a client, occupation is updated to <%d>, avaliability is updated to <%d>\n", this->occupancy, getAvailability());
+        fprintf(stderr, "Hospital B has been assigned to a client, occupation is updated to <%d>, avaliability is updated to <%g>\n", this->occupancy, getAvailability());
     }
 
     void setInfo(int location, int capacity, char occupancy) {
@@ -144,24 +144,24 @@ class Hospital {
     void findLocationScore(int location) {
         float a = getAvailability();
         // on-screen message 5
-        fprintf(stderr, "Hospital B has capacity = <%d>, occupation = <%d>, availability = <%d>\n", this->capacity, this->occupancy, getAvailability());
+        fprintf(stderr, "Hospital B has capacity = <%d>, occupation = <%d>, availability = <%g>\n", this->capacity, this->occupancy, getAvailability());
         float d;
         a = (a < 0 || a > 1) ? -1 : a;
         int reIndex = getRelocation(location);
         if (reIndex == -1 || location == this->location) d = -1;
         if (a == -1 || d == -1)  {
             // on-screen message 3
-            fprintf(stderr, "Hospital B does not have the location <%d> in map\n");
+            fprintf(stderr, "Hospital B does not have the location <%d> in map\n", location);
             hospitalScore[0] = -1;
             hospitalScore[1] = -1;
             return; 
         }
         hospitalScore[1] = shortestPath(reIndex);
         // on-screen message 6
-        fprintf(stderr, "Hospital B has found the shortest path to client, distance = <%d>\n", hospitalScore[1]);
+        fprintf(stderr, "Hospital B has found the shortest path to client, distance = <%g>\n", hospitalScore[1]);
         hospitalScore[0] = 1 / (hospitalScore[1] * (1.1 - a));
         // on-screen message 7
-        fprintf(stderr, "Hospital B has the score = <%d>\n", hospitalScore[0]);
+        fprintf(stderr, "Hospital B has the score = <%g>\n", hospitalScore[0]);
     }
 };
 
