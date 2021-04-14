@@ -26,7 +26,7 @@ using namespace std;
 static struct sockaddr_in local_addr;
 static int sockfd;
 static socklen_t sockaddr_in_length;
-// using a 2-D array to store the basic info of each hospital
+// using a 2-D array to store the initial info of each hospital
 // 0 ~ 2 stands for hospitalA ~ C, [][0] - capacity, [][1] - occupancy
 static int hospitals[3][2];
 
@@ -155,11 +155,16 @@ static HospitalServer hospitalA, hospitalB, hospitalC;
 
 // on-screen message 4/5
 void getHospitalsScore(int location) {
+    // first check the current availability of each hospital, then receive the score and distance for avaiable hospitals
     if (hospitals[0][0] > hospitals[0][1]) {
         hospitalA.send(to_string(location));
         fprintf(stderr, "The Scheduler has sent client location to Hospital A using UDP over port <%d>\n", HOSPITALA_PORT_NUM);
         hospitalA.getScore(0);
-        fprintf(stderr, "The Scheduler has received map information from Hospital A, the score = <%g> and the distance = <%g>\n", hospitalsScore[0][0], hospitalsScore[0][1]);
+        if (hospitalsScore[0][0] != -1 && hospitalsScore[0][1] != -1) {
+            fprintf(stderr, "The Scheduler has received map information from Hospital A, the score = <%g> and the distance = <%g>\n", hospitalsScore[0][0], hospitalsScore[0][1]);
+        } else {
+            fprintf(stderr, "The Scheduler has received map information from Hospital A, the score = <None> and the distance = <None>\n");
+        }
     } else {
         hospitalsScore[0][0] = -1;
     }
@@ -168,7 +173,11 @@ void getHospitalsScore(int location) {
         hospitalB.send(to_string(location));
         fprintf(stderr, "The Scheduler has sent client location to Hospital B using UDP over port <%d>\n", HOSPITALB_PORT_NUM);
         hospitalB.getScore(1);
-        fprintf(stderr, "The Scheduler has received map information from Hospital B, the score = <%g> and the distance = <%g>\n", hospitalsScore[1][0], hospitalsScore[1][1]);
+        if (hospitalsScore[1][0] != -1 && hospitalsScore[1][1] != -1) {
+            fprintf(stderr, "The Scheduler has received map information from Hospital B, the score = <%g> and the distance = <%g>\n", hospitalsScore[1][0], hospitalsScore[1][1]);
+        } else {
+            fprintf(stderr, "The Scheduler has received map information from Hospital B, the score = <None> and the distance = <None>\n");
+        }
     } else {
         hospitalsScore[1][0] = -1;
     }
@@ -177,7 +186,11 @@ void getHospitalsScore(int location) {
         hospitalC.send(to_string(location));
         fprintf(stderr, "The Scheduler has sent client location to Hospital C using UDP over port <%d>\n", HOSPITALC_PORT_NUM);
         hospitalC.getScore(2);
-        fprintf(stderr, "The Scheduler has received map information from Hospital C, the score = <%g> and the distance = <%g>\n", hospitalsScore[2][0], hospitalsScore[2][1]);
+        if (hospitalsScore[2][0] != -1 && hospitalsScore[2][1] != -1) {
+            fprintf(stderr, "The Scheduler has received map information from Hospital C, the score = <%g> and the distance = <%g>\n", hospitalsScore[2][0], hospitalsScore[2][1]);
+        } else {
+            fprintf(stderr, "The Scheduler has received map information from Hospital C, the score = <None> and the distance = <None>\n");
+        }
     } else {
         hospitalsScore[2][0] = -1;
     }
@@ -188,12 +201,24 @@ int selectHospital() {
     float highScore = max(hospitalsScore[0][0], hospitalsScore[1][0]);
     highScore = max(highScore, hospitalsScore[2][0]);
     if (highScore == -1) return -1;
+    
     int count = 0;
-    // 1 + 2 = 3, 1 + 3 = 4, 2 + 3 = 5, 1 + 2 + 3 = 6 --> all the multiple cases
-    if (highScore == hospitalsScore[0][0]) count = count + 1;
-    if (highScore == hospitalsScore[1][0]) count = count + 2;
-    if (highScore == hospitalsScore[2][0]) count = count + 3;
-    return count;
+    for (int i = 0; i < 3; i++) {
+        if (highScore == hospitalsScore[i][0]) count = count + 1;
+    }
+    // check if there are multiple tied scores
+    if (count == 1) {
+        if (highScore == hospitalsScore[0][0]) return 0;
+        if (highScore == hospitalsScore[1][0]) return 1;
+        if (highScore == hospitalsScore[2][0]) return 2;
+    } else {
+        count = 0;
+        // 1 + 2 = 3, 1 + 3 = 4, 2 + 3 = 5, 1 + 2 + 3 = 6 --> all the multiple cases
+        if (highScore == hospitalsScore[0][0]) count = count + 1;
+        if (highScore == hospitalsScore[1][0]) count = count + 2;
+        if (highScore == hospitalsScore[2][0]) count = count + 3;
+        return count;
+    }
 }
 
 // selected the hospital with the shortest distance
@@ -211,12 +236,20 @@ int chooseHospital(int selectedLocation) {
         default: {
             float minDistance = min(hospitalsScore[0][1], hospitalsScore[1][1]);
             minDistance = min(minDistance, hospitalsScore[2][1]);
+            // if there are tied distances, we choose the last compared one.
             if (minDistance == hospitalsScore[0][1]) result = 0;
             if (minDistance == hospitalsScore[1][1]) result = 1;
             if (minDistance == hospitalsScore[2][1]) result = 2;
         }
     }
     return result;
+};
+
+void messageConfirm(int selectedResult) {
+    if (selectedResult == -1) fprintf(stderr, "The Scheduler has assigned None to the client\n");
+    if (selectedResult == 0) fprintf(stderr, "The Scheduler has assigned Hospital A to the client\n");
+    if (selectedResult == 1) fprintf(stderr, "The Scheduler has assigned Hospital B to the client\n");
+    if (selectedResult == 2) fprintf(stderr, "The Scheduler has assigned Hospital C to the client\n");
 };
 
 void updateHospital(int selectedResult) {
@@ -234,12 +267,6 @@ void updateOccupancy(int selectedResult) {
     hospitals[1][1] = selectedResult == 1 ? hospitals[1][1] + 1 : hospitals[1][1];
     hospitals[2][1] = selectedResult == 2 ? hospitals[2][1] + 1 : hospitals[2][1];
     updateHospital(selectedResult);
-};
-
-void messageConfirm(int selectedResult) {
-    if (selectedResult == 0) fprintf(stderr, "The Scheduler has assigned Hospital A to the client\n");
-    if (selectedResult == 1) fprintf(stderr, "The Scheduler has assigned Hospital B to the client\n");
-    if (selectedResult == 2) fprintf(stderr, "The Scheduler has assigned Hospital C to the client\n");
 };
 
 // Communicate with client
@@ -335,12 +362,13 @@ int main() {
     client.bindClient();
     
     while(1) {
+        // connect to client and receive the location
         client.connectClient();
         int location = client.getClientLocation();
         // on-screen message 3
         fprintf(stderr, "The Scheduler has received client at location <%d> from the client using TCP over port <%d>\n", location, TCP_PORT_NUM);
 
-        // receive the score from the hospitals 
+        // receive the score from the hospitals
         getHospitalsScore(location);
 
         // determine which hospital to be selected

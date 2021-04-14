@@ -55,7 +55,7 @@ class Hospital {
     }
 
     string getHospitalInfo() {
-        return to_string(this->location) + " " + to_string(this->capacity) + " " + to_string(this->occupancy);
+        return to_string(this->capacity) + " " + to_string(this->occupancy);
     }
 
     // set re_indexed_map
@@ -118,7 +118,6 @@ class Hospital {
         bool visited[hospital_relocation_mapping.size()] = {0};
         visited[reIndex] = true;
         helper(shortest, current, visited, reIndex);
-        cout << "shortest path is: " << shortest << endl;
         return shortest;
     }
 
@@ -358,11 +357,9 @@ class SchedulerMain {
 
             // send the score to the scheduler
             sendHospitalMessages(returnMessage);
-            // on-screen message 4
+            // on-screen message 4/8
             if (hospitalScore[1] == -1) fprintf(stderr, "Hospital B has sent 'location not found' to the Scheduler\n");
-            
-            // on-screen message 8
-            fprintf(stderr, "Hospital B has sent score = <%g> and distance = <%g> to the Scheduler\n", hospitalScore[0], hospitalScore[1]);
+            else fprintf(stderr, "Hospital B has sent score = <%g> and distance = <%g> to the Scheduler\n", hospitalScore[0], hospitalScore[1]);
 
             // receive the scheduler's response and update the map
             // 1 stands for the hospital has been selected, 0 for not
