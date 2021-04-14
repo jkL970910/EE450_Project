@@ -139,7 +139,7 @@ class Hospital {
         }
     }
 
-    float findLocationScore(int location) {
+    void findLocationScore(int location) {
         float a = getAvailability();
         float d;
         a = (a < 0 || a > 1) ? -1 : a;
@@ -147,11 +147,12 @@ class Hospital {
         if (reIndex == -1 || location == this->location) d = -1;
         if (a == -1 || d == -1)  {
             fprintf(stderr, "the client location is not in the map\n");
+            hospitalScore[0] = -1;
             hospitalScore[1] = -1;
-            return -1; 
+            return; 
         }
         hospitalScore[1] = shortestPath(reIndex);
-        return 1 / (d * (1.1 - a));
+        hospitalScore[0] = 1 / (hospitalScore[1] * (1.1 - a));
     }
 };
 
@@ -342,17 +343,18 @@ class SchedulerMain {
         while (1) {
             // receive client info from the scheduler
             receiveSchedulerMessages();
-            
             int location = atoi(buffer);
 
             // using DFS to find the shortest location score
             // socre = -1 stands for score = None
             fprintf(stderr, "the hospitalA has received client location: %d\n", location);
-            hospitalScore[0] = hospital.findLocationScore(location);
-            string score = to_string(hospitalScore[0]) + " " + to_string(hospitalScore[1]);
+            hospital.findLocationScore(location);
+
+            fprintf(stderr, "the hospitalA's score is %g, distance is %g\n", hospitalScore[0], hospitalScore[1]);
+            string returnMessage = to_string(hospitalScore[0]) + " " + to_string(hospitalScore[1]);
 
             // send the score to the scheduler
-            sendHospitalMessages(score);
+            sendHospitalMessages(returnMessage);
 
             // receive the scheduler's response and update the map
             // 1 stands for the hospital has been selected, 0 for not

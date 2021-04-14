@@ -32,7 +32,7 @@ static int hospitals[3][3];
 
 // using a 2-D array to store the score and distance of each hospital
 // 0 ~ 2 stands for hospitalA ~ C, [][0] - score, [][1] - distance
-static int hospitalsScore[3][2];
+static float hospitalsScore[3][2];
 
 void Error(char* msg) {
     perror(msg);
@@ -56,7 +56,7 @@ void bind() {
 }
 
 int selectHospital() {
-    
+
 }
 
 // Communicate with hospitals
@@ -123,15 +123,15 @@ class HospitalServer {
         switch(count) {
             case 0: 
                 fprintf(stderr, "the scheduler has initialized hospitalA using UDP through port: %d\n", HOSPITALA_PORT_NUM); 
-                fprintf(stderr, "the capacity of HospitalA is: %d, the occupancy of HospitalA is: %d\n", hospitals[count][0], hospitals[count][1]);
+                fprintf(stderr, "the capacity of HospitalA is: %d, the occupancy of HospitalA is: %d\n", hospitals[count][1], hospitals[count][2]);
                 break;
             case 1: 
                 fprintf(stderr, "the scheduler has initialized hospitalB using UDP through port: %d\n", HOSPITALB_PORT_NUM); 
-                fprintf(stderr, "the capacity of HospitalA is: %d, the occupancy of HospitalA is: %d\n", hospitals[count][0], hospitals[count][1]);
+                fprintf(stderr, "the capacity of HospitalA is: %d, the occupancy of HospitalA is: %d\n", hospitals[count][1], hospitals[count][2]);
                 break;
             case 2: 
                 fprintf(stderr, "the scheduler has initialized hospitalC using UDP through port: %d\n", HOSPITALC_PORT_NUM); 
-                fprintf(stderr, "the capacity of HospitalA is: %d, the occupancy of HospitalA is: %d\n", hospitals[count][0], hospitals[count][1]);
+                fprintf(stderr, "the capacity of HospitalA is: %d, the occupancy of HospitalA is: %d\n", hospitals[count][1], hospitals[count][2]);
                 break;
         }
     }
@@ -150,7 +150,7 @@ class HospitalServer {
                 str = str + buffer[i++];
             }
             
-            hospitals[count][j++] = atoi(str.c_str());
+            hospitalsScore[count][j++] = atoi(str.c_str());
             str = "";
         }
     }
@@ -258,7 +258,7 @@ int main() {
         fprintf(stderr, "the scheduler get the client location %d and start quering for the hospitals\n", location);
 
         // receive the score from the hospitals 
-        if (hospitals[0][0] > hospitals[0][1]) {
+        if (hospitals[0][1] > hospitals[0][2]) {
             hospitalA.send(to_string(location));
             hospitalA.getScore(0);
             fprintf(stderr, "the score of hospitalA is: %g\n", hospitalsScore[0][0]);
@@ -266,8 +266,10 @@ int main() {
             hospitalsScore[0][0] = -1;
             fprintf(stderr, "the hospitalA is already full\n");
         }
+
+        cout << hospitalsScore[0][0] << " " << hospitalsScore[0][1] << endl;
         
-        if (hospitals[1][0] > hospitals[1][1]) {
+        if (hospitals[1][1] > hospitals[1][2]) {
             hospitalB.send(to_string(location));
             hospitalB.getScore(1);
             fprintf(stderr, "the score of hospitalB is: %g\n", hospitalsScore[1][0]);
@@ -276,7 +278,7 @@ int main() {
             fprintf(stderr, "the hospitalB is already full\n");
         }
         
-        if (hospitals[2][0] > hospitals[2][1]) {
+        if (hospitals[2][1] > hospitals[2][2]) {
             hospitalC.send(to_string(location));
             hospitalC.getScore(2);
             fprintf(stderr, "the score of hospitalC is: %g\n", hospitalsScore[2][0]);
