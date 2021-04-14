@@ -42,8 +42,8 @@ class SchedulerMain {
 
         // set schedulermain address
         remote_addr.sin_family = AF_INET;
-        remote_addr.sin_port = htons(port_num); // htons 将整型变量从主机字节顺序转变成网络字节顺序
-        remote_addr.sin_addr.s_addr = inet_addr(HOSTNAME); // inet_addr 一个点分十进制的IP转换成一个长整数型数
+        remote_addr.sin_port = htons(port_num);
+        remote_addr.sin_addr.s_addr = inet_addr(HOSTNAME); 
 
         remote_sockaddr_length = sizeof(remote_addr);
         int res = connect(sockfd, (struct sockaddr *)&remote_addr, remote_sockaddr_length);
@@ -51,7 +51,8 @@ class SchedulerMain {
             Error((char*)"ERROR connecting");
         }
 
-        fprintf(stderr, "Client is connection to scheduler througth TCP at port: %d\n", TCP_PORT_NUM);
+        // on-screen message 1
+        fprintf(stderr, "The client is up and running\n");
     }
 
     void queryHospital(string location) {
@@ -68,7 +69,9 @@ class SchedulerMain {
         if (res < 0) {
             Error((char*)"ERROR writing to socket");
         }
-        fprintf(stderr, "Client has sent location <%s> to Scheduler using TCP\n", location.c_str());
+
+        // on-screen message 2
+        fprintf(stderr, "The client has sent query to Scheduler using TCP: client location <%s>\n", location.c_str());
 
         // get result from schedulermain
         bzero(buffer, 256);
@@ -77,8 +80,15 @@ class SchedulerMain {
             Error((char*)"ERROR reading from socket");
         }
 
-        // print the received result from Scheduler
-        fprintf(stderr, "Client has received results from Scheduler: <%s> \n", buffer);
+        // on-screen message 3 / errors
+        int result = atoi(buffer);
+        switch(result) {
+            case -2: fprintf(stderr, "Location <%s> not found\n", location); break;
+            case -1: fprintf(stderr, "Score = None, No assignment\n"); break;
+            case 0: fprintf(stderr, "The client has received results from the Scheduler: assigned to Hospital A"); break;
+            case 1: fprintf(stderr, "The client has received results from the Scheduler: assigned to Hospital B"); break;
+            case 2: fprintf(stderr, "The client has received results from the Scheduler: assigned to Hospital C"); break;
+        }
     }
 };
 

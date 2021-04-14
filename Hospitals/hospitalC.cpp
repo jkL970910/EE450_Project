@@ -42,6 +42,8 @@ class Hospital {
     // preparation: store and construct the map.txt
     void updateOccupancy() {
         this -> occupancy = this -> occupancy + 1;
+        // on-screen message 9
+        fprintf(stderr, "Hospital C has been assigned to a client, occupation is updated to <%d>, avaliability is updated to <%d>\n", this->occupancy, getAvailability());
     }
 
     void setInfo(int location, int capacity, char occupancy) {
@@ -49,7 +51,7 @@ class Hospital {
         this -> re_location = getRelocation(location);
         this -> capacity = capacity;
         this -> occupancy = occupancy;
-        cout << this->location << " " << this->capacity << " " << this->occupancy << endl;
+        fprintf(stderr, "Hospital C has total capacity <%d> and initial occupancy <%d>\n", capacity, occupancy);
     }
 
     string getHospitalInfo() {
@@ -141,18 +143,25 @@ class Hospital {
 
     void findLocationScore(int location) {
         float a = getAvailability();
+        // on-screen message 5
+        fprintf(stderr, "Hospital C has capacity = <%d>, occupation = <%d>, availability = <%d>\n", this->capacity, this->occupancy, getAvailability());
         float d;
         a = (a < 0 || a > 1) ? -1 : a;
         int reIndex = getRelocation(location);
         if (reIndex == -1 || location == this->location) d = -1;
         if (a == -1 || d == -1)  {
-            fprintf(stderr, "the client location is not in the map\n");
+            // on-screen message 3
+            fprintf(stderr, "Hospital C does not have the location <%d> in map\n");
             hospitalScore[0] = -1;
             hospitalScore[1] = -1;
             return; 
         }
         hospitalScore[1] = shortestPath(reIndex);
+        // on-screen message 6
+        fprintf(stderr, "Hospital C has found the shortest path to client, distance = <%d>\n", hospitalScore[1]);
         hospitalScore[0] = 1 / (hospitalScore[1] * (1.1 - a));
+        // on-screen message 7
+        fprintf(stderr, "Hospital C has the score = <%d>\n", hospitalScore[0]);
     }
 };
 
@@ -266,11 +275,8 @@ class File {
     void construct(Hospital& hospital) {
         File file;
         file.open();
-
         file.reIndexHospitalLocation(hospital);
         file.getMapMatrix(hospital);
-        fprintf(stderr, "The hospitalC has constructed the map\n");
-        
         file.close();
     }
 };
@@ -332,37 +338,38 @@ class SchedulerMain {
         }
         
         remote_sockaddr_length = sizeof(struct sockaddr_in);
-
-        fprintf(stderr, "The hospitalC is up and running using UDP on port <%d>\n", HOSPITALC_PORT_NUM);
         
         // initial the hospital info and send to scheduler
         string message = hospital.getHospitalInfo();
         sendHospitalMessages(message);
-        fprintf(stderr, "The hospitalC has sent its inital info to the Scheduler\n");
         
         while (1) {
             // receive client info from the scheduler
             receiveSchedulerMessages();
-            
             int location = atoi(buffer);
 
             // using DFS to find the shortest location score
             // socre = -1 stands for score = None
-            fprintf(stderr, "the hospitalC has received client location: %d\n", location);
+            // on-screen message 2
+            fprintf(stderr, "Hospital C has received input from client at location %d\n", location);
             hospital.findLocationScore(location);
 
-            fprintf(stderr, "the hospitalC's score is %g, distance is %g\n", hospitalScore[0], hospitalScore[1]);
             string returnMessage = to_string(hospitalScore[0]) + " " + to_string(hospitalScore[1]);
 
             // send the score to the scheduler
             sendHospitalMessages(returnMessage);
+            // on-screen message 4
+            if (hospitalScore[1] == -1) fprintf(stderr, "Hospital C has sent 'location not found' to the Scheduler\n");
+            
+            // on-screen message 8
+            fprintf(stderr, "Hospital C has sent score = <%g> and distance = <%g> to the Scheduler\n", hospitalScore[0], hospitalScore[1]);
 
             // receive the scheduler's response and update the map
             // 1 stands for the hospital has been selected, 0 for not
             receiveSchedulerMessages();
             int chosen = atoi(buffer);
 
-            if (chosen == 1) {
+            if (chosen == 2) {
                 hospital.updateOccupancy();
             }
         }
@@ -378,6 +385,9 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "you mush input all the three of the hospital, as '<hospital location> <total capacity> <initial occupancy>'\n");
         exit(0);
     }
+
+    // on-screen message 1
+    fprintf(stderr, "Hospital C is up and running using UDP on port <%d>\n", HOSPITALC_PORT_NUM);
 
     // construct the map and store in hospitalC
     map.construct(hospitalC);

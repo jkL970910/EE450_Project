@@ -27,8 +27,8 @@ static struct sockaddr_in local_addr;
 static int sockfd;
 static socklen_t sockaddr_in_length;
 // using a 2-D array to store the basic info of each hospital
-// 0 ~ 2 stands for hospitalA ~ C, [][0] - location, [][1] - capacity, [][2] - occupancy
-static int hospitals[3][3];
+// 0 ~ 2 stands for hospitalA ~ C, [][0] - capacity, [][1] - occupancy
+static int hospitals[3][2];
 
 // using a 2-D array to store the score and distance of each hospital
 // 0 ~ 2 stands for hospitalA ~ C, [][0] - score, [][1] - distance
@@ -55,9 +55,92 @@ void bind() {
     bind(sockfd, (struct sockaddr*) & local_addr, sockaddr_in_length);
 }
 
-int selectHospital() {
-
+// on-screen message 4/5
+void getHospitalsScore(int location) {
+    if (hospitals[0][0] > hospitals[0][1]) {
+        hospitalA.send(to_string(location));
+        fprintf(stderr, "The Scheduler has sent client location to Hospital A using UDP over port <%d>\n", HOSPITALA_PORT_NUM);
+        hospitalA.getScore(0);
+        fprintf(stderr, "The Scheduler has received map information from Hospital A, the score = <%g> and the distance = <%g>\n", hospitalsScore[0][0], hospitalsScore[0][1]);
+    } else {
+        hospitalsScore[0][0] = -1;
+    }
+    
+    if (hospitals[1][0] > hospitals[1][1]) {
+        hospitalB.send(to_string(location));
+        fprintf(stderr, "The Scheduler has sent client location to Hospital B using UDP over port <%d>\n", HOSPITALB_PORT_NUM);
+        hospitalB.getScore(1);
+        fprintf(stderr, "The Scheduler has received map information from Hospital B, the score = <%g> and the distance = <%g>\n", hospitalsScore[1][0], hospitalsScore[1][1]);
+    } else {
+        hospitalsScore[1][0] = -1;
+    }
+    
+    if (hospitals[2][0] > hospitals[2][1]) {
+        hospitalC.send(to_string(location));
+        fprintf(stderr, "The Scheduler has sent client location to Hospital C using UDP over port <%d>\n", HOSPITALC_PORT_NUM);
+        hospitalC.getScore(2);
+        fprintf(stderr, "The Scheduler has received map information from Hospital C, the score = <%g> and the distance = <%g>\n", hospitalsScore[2][0], hospitalsScore[2][1]);
+    } else {
+        hospitalsScore[2][0] = -1;
+    }
 }
+
+// selected the hospital with the highest score
+int selectHospital() {
+    float highScore = max(hospitalsScore[0][0], hospitalsScore[1][0], hospitalsScore[2][0]);
+    if (highScore == -1) return -1;
+    int count = 0;
+    // 1 + 2 = 3, 1 + 3 = 4, 2 + 3 = 5, 1 + 2 + 3 = 6 --> all the multiple cases
+    if (highScore == hospitalsScore[0][0]) count = count + 1;
+    if (highScore == hospitalsScore[1][0]) count = count + 2;
+    if (highScore == hospitalsScore[2][0]) count = count + 3;
+    return count;
+}
+
+// selected the hospital with the shortest distance
+int chooseHospital(int selectedLocation) {
+    int result;
+    switch(selectedLocation) {
+        case -1: result = -1; break;
+        case 0: result = 0; break;
+        case 1: result = 1; break;
+        case 2: result = 2; break;
+        // compare the distances between those tied hospitals
+        case 3: result = hospitalsScore[0][1] > hospitalsScore[1][1] ? 1 : 0; break;
+        case 4: result = hospitalsScore[0][1] > hospitalsScore[2][1] ? 2 : 0; break;
+        case 5: result = hospitalsScore[1][1] > hospitalsScore[2][1] ? 2 : 1; break;
+        default: {
+            float minDistance = min(hospitalsScore[0][1], hospitalsScore[1][1], hospitalsScore[2][1]);
+            if (minDistance == hospitalsScore[0][1]) result = 0;
+            if (minDistance == hospitalsScore[1][1]) result = 1;
+            if (minDistance == hospitalsScore[2][1]) result = 2;
+        }
+    }
+    return result;
+};
+
+void updateOccupancy(int selectedResult) {
+    hospitals[0][1] = selectedResult == 0 ? hospitals[0][1] + 1 : hospitals[0][1];
+    hospitals[1][1] = selectedResult == 1 ? hospitals[1][1] + 1 : hospitals[1][1];
+    hospitals[2][1] = selectedResult == 2 ? hospitals[2][1] + 1 : hospitals[2][1];
+    updateHospital(selectedResult);
+};
+
+void updateHospital(int selectedResult) {
+    hospitalA.send(to_string(selectedResult));
+    hospitalB.send(to_string(selectedResult));
+    hospitalC.send(to_string(selectedResult));
+    // on-screen message 8
+    if (selectedResult == 0) fprintf(stderr, "The Scheduler has sent the result to Hospital A using UDP over port <%d>\n", UDP_PORT_NUM);
+    if (selectedResult == 1) fprintf(stderr, "The Scheduler has sent the result to Hospital B using UDP over port <%d>\n", UDP_PORT_NUM);
+    if (selectedResult == 2) fprintf(stderr, "The Scheduler has sent the result to Hospital C using UDP over port <%d>\n", UDP_PORT_NUM);
+};
+
+void messageConfirm(int selectedResult) {
+    if (selectedResult == 0) fprintf(stderr, "The Scheduler has assigned Hospital A to the client\n");
+    if (selectedResult == 1) fprintf(stderr, "The Scheduler has assigned Hospital B to the client\n");
+    if (selectedResult == 2) fprintf(stderr, "The Scheduler has assigned Hospital C to the client\n");
+};
 
 // Communicate with hospitals
 class HospitalServer {
@@ -120,18 +203,17 @@ class HospitalServer {
             hospitals[count][j++] = atoi(str.c_str());
             str = "";
         }
+
+        // on-screen message 2
         switch(count) {
             case 0: 
-                fprintf(stderr, "the scheduler has initialized hospitalA using UDP through port: %d\n", HOSPITALA_PORT_NUM); 
-                fprintf(stderr, "the capacity of HospitalA is: %d, the occupancy of HospitalA is: %d\n", hospitals[count][1], hospitals[count][2]);
+                fprintf(stderr, "The Scheduler has received information from Hospital A: total capacity is <%d> and initial occupancy is <%d>\n", hospitals[count][0], hospitals[count][1]);
                 break;
             case 1: 
-                fprintf(stderr, "the scheduler has initialized hospitalB using UDP through port: %d\n", HOSPITALB_PORT_NUM); 
-                fprintf(stderr, "the capacity of HospitalA is: %d, the occupancy of HospitalA is: %d\n", hospitals[count][1], hospitals[count][2]);
+                fprintf(stderr, "The Scheduler has received information from Hospital B: total capacity is <%d> and initial occupancy is <%d>\n", hospitals[count][0], hospitals[count][1]);
                 break;
             case 2: 
-                fprintf(stderr, "the scheduler has initialized hospitalC using UDP through port: %d\n", HOSPITALC_PORT_NUM); 
-                fprintf(stderr, "the capacity of HospitalA is: %d, the occupancy of HospitalA is: %d\n", hospitals[count][1], hospitals[count][2]);
+                fprintf(stderr, "The Scheduler has received information from Hospital C: total capacity is <%d> and initial occupancy is <%d>\n", hospitals[count][0], hospitals[count][1]);
                 break;
         }
     }
@@ -150,7 +232,7 @@ class HospitalServer {
                 str = str + buffer[i++];
             }
             
-            hospitalsScore[count][j++] = atoi(str.c_str());
+            hospitalsScore[count][j++] = atof(str.c_str());
             str = "";
         }
     }
@@ -213,7 +295,6 @@ class Client {
 
     void connectClient() {
         // start listening to client socket
-        fprintf(stderr, "scheduler is listening to client through TCP at port: %d\n", TCP_PORT_NUM);
         listen(sockfd, 5);
 
         remote_sockaddr_length = sizeof(remote_addr);
@@ -222,7 +303,6 @@ class Client {
         if (newsockfd < 0) {
             Error((char*)"ERROR on accept");
         }
-        fprintf(stderr, "scheduler is connecting to client througth TCP at port: %d\n", TCP_PORT_NUM);
     }
 
     int getClientLocation() {
@@ -238,11 +318,11 @@ class Client {
 static Client client;
 
 int main() {
+    // on-screen message 1
     fprintf(stderr, "The Scheduler is up and running.\n");
     
     // build up UDP port
     bind();
-    fprintf(stderr, "scheduler is listening to hospitals through UDP at port: %d\n", UDP_PORT_NUM);
 
     // get initial avaliability of hospitals
     hospitalA.getInitHospital(HOSPITALA_PORT_NUM, 0);
@@ -255,44 +335,29 @@ int main() {
     while(1) {
         client.connectClient();
         int location = client.getClientLocation();
-        fprintf(stderr, "the scheduler get the client location %d and start quering for the hospitals\n", location);
+        // on-screen message 3
+        fprintf(stderr, "The Scheduler has received client at location <%d> from the client using TCP over port <%d>\n", location, TCP_PORT_NUM);
 
         // receive the score from the hospitals 
-        if (hospitals[0][1] > hospitals[0][2]) {
-            hospitalA.send(to_string(location));
-            hospitalA.getScore(0);
-            fprintf(stderr, "the score of hospitalA is: %g\n", hospitalsScore[0][0]);
-        } else {
-            hospitalsScore[0][0] = -1;
-            fprintf(stderr, "the hospitalA is already full\n");
-        }
-
-        cout << hospitalsScore[0][0] << " " << hospitalsScore[0][1] << endl;
-        
-        if (hospitals[1][1] > hospitals[1][2]) {
-            hospitalB.send(to_string(location));
-            hospitalB.getScore(1);
-            fprintf(stderr, "the score of hospitalB is: %g\n", hospitalsScore[1][0]);
-        } else {
-            hospitalsScore[1][0] = -1;
-            fprintf(stderr, "the hospitalB is already full\n");
-        }
-        
-        if (hospitals[2][1] > hospitals[2][2]) {
-            hospitalC.send(to_string(location));
-            hospitalC.getScore(2);
-            fprintf(stderr, "the score of hospitalC is: %g\n", hospitalsScore[2][0]);
-        } else {
-            hospitalsScore[2][0] = -1;
-            fprintf(stderr, "the hospitalC is already full\n");
-        }
+        getHospitalsScore(location);
 
         // determine which hospital to be selected
-        int selectedLocation = selectHospital();
+        int selectedResult;
+        if (hospitalsScore[0][1] == -1 || hospitalsScore[1][1] == -1 || hospitalsScore[2][1] == -1) selectedResult = -2;
+        else {
+            int selectedLocation = selectHospital();
+            selectedResult = chooseHospital(selectedLocation);
+        }
 
-        // TODO: send the update info to the hospitals
-        
+        // on-screen message 7
+        messageConfirm(selectedResult);
+
         // send the selected hospital to the client
-        client.send(to_string(location));
+        client.send(to_string(selectedResult));
+        // on-screen message 7
+        fprintf(stderr, "The Scheduler has sent the result to client using TCP over port <%d>\n", TCP_PORT_NUM);
+        
+        // update the selected hospital's info and send to the hospital
+        updateOccupancy(selectedResult);
     }
 }
