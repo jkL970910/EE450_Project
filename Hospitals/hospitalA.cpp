@@ -21,8 +21,7 @@ using namespace std;
 #define HOSPITALA_PORT_NUM 30864
 #define UDP_PORT_NUM 33864
 #define HOSTNAME "127.0.0.1"
-#define FILENAME "map_simple.txt"
-#define MAX_LOCATION_NUM 100
+#define FILENAME "map_hard.txt"
 #define FLT_MAX 3.402823466e+38F
 
 static string client_location; // message of userid from Scheduler, backend server will give location based on this userid
@@ -85,10 +84,10 @@ class Hospital {
     }
 
     // set up the matrix with the re-indexs of locations
-    void setAjacencyMatrixbyRow(float* single_row_location_info) {
-        int index_first = (int)single_row_location_info[0];
-        int index_second = (int)single_row_location_info[1];
-        float distance = single_row_location_info[2];
+    void setAjacencyMatrixbyRow(int* single_row_location_info, float* single_row_location_distance) {
+        int index_first = single_row_location_info[0];
+        int index_second = single_row_location_info[1];
+        float distance = single_row_location_distance[0];
 
         int re_index_first = getRelocation(index_first);
         int re_index_second = getRelocation(index_second);
@@ -110,35 +109,61 @@ class Hospital {
         return (this->capacity - this->occupancy) / (float)this->capacity;
     }
 
+    // BFS method: 
     float shortestPath(int reIndex) {
-        if (reIndex == this->re_location) return 0;
-        
-        float shortest = FLT_MAX;
-        float current = 0;
+        queue<int> q;
         bool visited[hospital_relocation_mapping.size()] = {0};
-        visited[reIndex] = true;
-        helper(shortest, current, visited, reIndex);
-        return shortest;
-    }
-
-    // helper function of DFS
-    void helper(float& shortest, float& current, bool* visited, int index) {
-        if (index == this->re_location) {
-            shortest = min(shortest, current);
-            return;
+        tr1::unordered_map<int, float> distance;
+        for (int i = 0; i < hospital_relocation_mapping.size(); i++) {
+            distance[i] =  FLT_MAX;
         }
-        
-        for (pair<int, float> p : matrix[index]) {
-            if (!visited[p.first]) {
-                visited[p.first] = true;
-                float temp = current;
-                current = current + p.second;
-                helper(shortest, current, visited, p.first);
-                current = temp;
-                visited[p.first] = false;
+        distance[reIndex] = 0;
+        q.push(reIndex);
+        while (!q.empty()) {
+            int size = q.size();
+            for (int i = 0; i < size; i++) {
+                int curIndex = q.front();
+                visited[curIndex] = true;
+                q.pop();
+                for (pair<int, float> p : matrix[curIndex]) {
+                    if (!visited[p.first] || distance[p.first] > distance[curIndex] + p.second) {
+                        q.push(p.first);
+                        distance[p.first] = min(distance[p.first], distance[curIndex] + p.second);
+                    }
+                }
             }
         }
+        return distance[this->re_location];
     }
+
+    // DFS method:
+    // float shortestPath(int reIndex) {
+    //     float shortest = FLT_MAX;
+    //     float current = 0;
+    //     bool visited[hospital_relocation_mapping.size()] = {0};
+    //     visited[reIndex] = true;
+    //     helper(shortest, current, visited, reIndex);
+    //     return shortest;
+    // }
+
+    // // helper function of DFS
+    // void helper(float& shortest, float& current, bool* visited, int index) {
+    //     if (index == this->re_location) {
+    //         shortest = min(shortest, current);
+    //         return;
+    //     }
+        
+    //     for (pair<int, float> p : matrix[index]) {
+    //         if (!visited[p.first]) {
+    //             visited[p.first] = true;
+    //             float temp = current;
+    //             current = current + p.second;
+    //             helper(shortest, current, visited, p.first);
+    //             current = temp;
+    //             visited[p.first] = false;
+    //         }
+    //     }
+    // }
 
     void findLocationScore(int location) {
         float a = getAvailability();
@@ -229,7 +254,7 @@ class File {
     }
 
     // read the file and contruct an array to store each row
-    void bufferToLocationArray(char* s, float* location_info) {
+    void bufferToLocationArray(char* s, int* single_row_location_info, float* single_row_location_distance) {
         // convert char[] to string
         string buffer = "";
         buffer += s;
@@ -244,10 +269,8 @@ class File {
         while (buffer[i] != '\n') {
             if (buffer[i] == ' ') {
                 if (str.length() != 0) { // the blank is at the end of a string
-                    if (num < 2) location_info[num++] = atoi(str.c_str()); // first two as edges
-                    else {
-                        location_info[num++] = atof(str.c_str()); // the thrid as distance
-                    }
+                    if (num < 2) single_row_location_info[num++] = atoi(str.c_str()); // first two as edges
+                    else single_row_location_distance[0] = atof(str.c_str()); // the thrid as distance
                     str = "";
                 }
             } else {
@@ -260,12 +283,13 @@ class File {
     // read the map.txt and store the nums into matrix
     void getMapMatrix(Hospital& hospital) {   
         while (fgets(cache, fsize, fp)) {
-            float single_row_location_info[3];
-            for (int i = 0; i < 3; i++) {
+            int single_row_location_info[2];
+            float single_row_location_distance[1] = {0};
+            for (int i = 0; i < 2; i++) {
                 single_row_location_info[i] = 0; // initialize each single_row in order to avoid unnecessary loop
             }
-            bufferToLocationArray(cache, single_row_location_info);
-            hospital.setAjacencyMatrixbyRow(single_row_location_info);
+            bufferToLocationArray(cache, single_row_location_info, single_row_location_distance);
+            hospital.setAjacencyMatrixbyRow(single_row_location_info, single_row_location_distance);
         }
         rewind(fp);
     }
@@ -347,7 +371,7 @@ class SchedulerMain {
             receiveSchedulerMessages();
             int location = atoi(buffer);
 
-            // using DFS to find the shortest location score
+            // using BFS to find the shortest location score
             // socre = -1 stands for score = None
             // on-screen message 2
             fprintf(stderr, "Hospital A has received input from client at location %d\n", location);
@@ -366,7 +390,7 @@ class SchedulerMain {
             receiveSchedulerMessages();
             int chosen = atoi(buffer);
 
-            if (chosen == 0) {
+            if (chosen == 1) {
                 hospital.updateOccupancy();
             }
         }
