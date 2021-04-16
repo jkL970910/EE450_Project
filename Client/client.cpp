@@ -70,7 +70,7 @@ class SchedulerMain {
         }
 
         // on-screen message 2
-        fprintf(stderr, "The client has sent query to Scheduler using TCP: client location <%s>\n", location.c_str());
+        fprintf(stderr, "The client has sent query to Scheduler using TCP: client location %s\n", location.c_str());
 
         // get result from schedulermain
         bzero(buffer, 256);
@@ -82,7 +82,7 @@ class SchedulerMain {
         // on-screen message 3 / errors
         int result = atoi(buffer);
         switch(result) {
-            case -2: fprintf(stderr, "Location <%s> not found\n", message.c_str()); break;
+            case -2: fprintf(stderr, "Location %s not found\n", message.c_str()); break;
             case -1: fprintf(stderr, "Score = None, No assignment\n"); break;
             case 0: fprintf(stderr, "The client has received results from the Scheduler: assigned to Hospital A\n"); break;
             case 1: fprintf(stderr, "The client has received results from the Scheduler: assigned to Hospital B\n"); break;

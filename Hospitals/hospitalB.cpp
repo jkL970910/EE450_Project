@@ -42,7 +42,7 @@ class Hospital {
     void updateOccupancy() {
         this -> occupancy = this -> occupancy + 1;
         // on-screen message 9
-        fprintf(stderr, "Hospital B has been assigned to a client, occupation is updated to <%d>, avaliability is updated to <%g>\n", this->occupancy, getAvailability());
+        fprintf(stderr, "Hospital B has been assigned to a client, occupation is updated to %d, avaliability is updated to %g\n", this->occupancy, getAvailability());
     }
 
     void setInfo(int location, int capacity, char occupancy) {
@@ -50,7 +50,7 @@ class Hospital {
         this -> re_location = getRelocation(location);
         this -> capacity = capacity;
         this -> occupancy = occupancy;
-        fprintf(stderr, "Hospital B has total capacity <%d> and initial occupancy <%d>\n", capacity, occupancy);
+        fprintf(stderr, "Hospital B has total capacity %d and initial occupancy %d\n", capacity, occupancy);
     }
 
     string getHospitalInfo() {
@@ -139,24 +139,24 @@ class Hospital {
     void findLocationScore(int location) {
         float a = getAvailability();
         // on-screen message 5
-        fprintf(stderr, "Hospital B has capacity = <%d>, occupation = <%d>, availability = <%g>\n", this->capacity, this->occupancy, getAvailability());
+        fprintf(stderr, "Hospital B has capacity = %d, occupation = %d, availability = %g\n", this->capacity, this->occupancy, getAvailability());
         float d;
         a = (a < 0 || a > 1) ? -1 : a;
         int reIndex = getRelocation(location);
         if (reIndex == -1 || location == this->location) d = -1;
         if (a == -1 || d == -1)  {
             // on-screen message 3
-            fprintf(stderr, "Hospital B does not have the location <%d> in map\n", location);
+            fprintf(stderr, "Hospital B does not have the location %d in map\n", location);
             hospitalScore[0] = -1;
             hospitalScore[1] = -1;
             return; 
         }
         hospitalScore[1] = shortestPath(reIndex);
         // on-screen message 6
-        fprintf(stderr, "Hospital B has found the shortest path to client, distance = <%g>\n", hospitalScore[1]);
+        fprintf(stderr, "Hospital B has found the shortest path to client, distance = %g\n", hospitalScore[1]);
         hospitalScore[0] = 1 / (hospitalScore[1] * (1.1 - a));
         // on-screen message 7
-        fprintf(stderr, "Hospital B has the score = <%g>\n", hospitalScore[0]);
+        fprintf(stderr, "Hospital B has the score = %g\n", hospitalScore[0]);
     }
 };
 
@@ -354,7 +354,7 @@ class SchedulerMain {
             sendHospitalMessages(returnMessage);
             // on-screen message 4/8
             if (hospitalScore[1] == -1) fprintf(stderr, "Hospital B has sent 'location not found' to the Scheduler\n");
-            else fprintf(stderr, "Hospital B has sent score = <%g> and distance = <%g> to the Scheduler\n", hospitalScore[0], hospitalScore[1]);
+            else fprintf(stderr, "Hospital B has sent score = %g and distance = %g to the Scheduler\n", hospitalScore[0], hospitalScore[1]);
 
             // receive the scheduler's response and update the map
             // 1 stands for the hospital has been selected, 0 for not
@@ -379,7 +379,7 @@ int main(int argc, char* argv[]) {
     }
 
     // on-screen message 1
-    fprintf(stderr, "Hospital B is up and running using UDP on port <%d>\n", HOSPITALB_PORT_NUM);
+    fprintf(stderr, "Hospital B is up and running using UDP on port %d\n", HOSPITALB_PORT_NUM);
 
     // construct the map and store in hospitalB
     map.construct(hospitalB);

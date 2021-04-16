@@ -120,13 +120,13 @@ class HospitalServer {
         // on-screen message 2
         switch(count) {
             case 0: 
-                fprintf(stderr, "The Scheduler has received information from Hospital A: total capacity is <%d> and initial occupancy is <%d>\n", hospitals[count][0], hospitals[count][1]);
+                fprintf(stderr, "The Scheduler has received information from Hospital A: total capacity is %d and initial occupancy is %d\n", hospitals[count][0], hospitals[count][1]);
                 break;
             case 1: 
-                fprintf(stderr, "The Scheduler has received information from Hospital B: total capacity is <%d> and initial occupancy is <%d>\n", hospitals[count][0], hospitals[count][1]);
+                fprintf(stderr, "The Scheduler has received information from Hospital B: total capacity is %d and initial occupancy is %d\n", hospitals[count][0], hospitals[count][1]);
                 break;
             case 2: 
-                fprintf(stderr, "The Scheduler has received information from Hospital C: total capacity is <%d> and initial occupancy is <%d>\n", hospitals[count][0], hospitals[count][1]);
+                fprintf(stderr, "The Scheduler has received information from Hospital C: total capacity is %d and initial occupancy is %d\n", hospitals[count][0], hospitals[count][1]);
                 break;
         }
     }
@@ -158,12 +158,12 @@ void getHospitalsScore(int location) {
     // first check the current availability of each hospital, then receive the score and distance for avaiable hospitals
     if (hospitals[0][0] > hospitals[0][1]) {
         hospitalA.send(to_string(location));
-        fprintf(stderr, "The Scheduler has sent client location to Hospital A using UDP over port <%d>\n", HOSPITALA_PORT_NUM);
+        fprintf(stderr, "The Scheduler has sent client location to Hospital A using UDP over port %d\n", HOSPITALA_PORT_NUM);
         hospitalA.getScore(0);
         if (hospitalsScore[0][0] != -1 && hospitalsScore[0][1] != -1) {
-            fprintf(stderr, "The Scheduler has received map information from Hospital A, the score = <%g> and the distance = <%g>\n", hospitalsScore[0][0], hospitalsScore[0][1]);
+            fprintf(stderr, "The Scheduler has received map information from Hospital A, the score = %g and the distance = %g\n", hospitalsScore[0][0], hospitalsScore[0][1]);
         } else {
-            fprintf(stderr, "The Scheduler has received map information from Hospital A, the score = <None> and the distance = <None>\n");
+            fprintf(stderr, "The Scheduler has received map information from Hospital A, the score = None and the distance = None\n");
         }
     } else {
         hospitalsScore[0][0] = -1;
@@ -246,10 +246,10 @@ int chooseHospital(int selectedLocation) {
 };
 
 void messageConfirm(int selectedResult) {
-    if (selectedResult == -1) fprintf(stderr, "The Scheduler has assigned None to the client\n");
     if (selectedResult == 0) fprintf(stderr, "The Scheduler has assigned Hospital A to the client\n");
     if (selectedResult == 1) fprintf(stderr, "The Scheduler has assigned Hospital B to the client\n");
     if (selectedResult == 2) fprintf(stderr, "The Scheduler has assigned Hospital C to the client\n");
+    else fprintf(stderr, "The Scheduler has assigned None to the client\n");
 };
 
 void updateHospital(int selectedResult) {
@@ -257,9 +257,9 @@ void updateHospital(int selectedResult) {
     hospitalB.send(to_string(selectedResult));
     hospitalC.send(to_string(selectedResult));
     // on-screen message 8
-    if (selectedResult == 0) fprintf(stderr, "The Scheduler has sent the result to Hospital A using UDP over port <%d>\n", UDP_PORT_NUM);
-    if (selectedResult == 1) fprintf(stderr, "The Scheduler has sent the result to Hospital B using UDP over port <%d>\n", UDP_PORT_NUM);
-    if (selectedResult == 2) fprintf(stderr, "The Scheduler has sent the result to Hospital C using UDP over port <%d>\n", UDP_PORT_NUM);
+    if (selectedResult == 0) fprintf(stderr, "The Scheduler has sent the result to Hospital A using UDP over port %d\n", UDP_PORT_NUM);
+    if (selectedResult == 1) fprintf(stderr, "The Scheduler has sent the result to Hospital B using UDP over port %d\n", UDP_PORT_NUM);
+    if (selectedResult == 2) fprintf(stderr, "The Scheduler has sent the result to Hospital C using UDP over port %d\n", UDP_PORT_NUM);
 };
 
 void updateOccupancy(int selectedResult) {
@@ -366,7 +366,7 @@ int main() {
         client.connectClient();
         int location = client.getClientLocation();
         // on-screen message 3
-        fprintf(stderr, "The Scheduler has received client at location <%d> from the client using TCP over port <%d>\n", location, TCP_PORT_NUM);
+        fprintf(stderr, "The Scheduler has received client at location %d from the client using TCP over port %d\n", location, TCP_PORT_NUM);
 
         // receive the score from the hospitals
         getHospitalsScore(location);
@@ -385,7 +385,7 @@ int main() {
         // send the selected hospital to the client
         client.send(to_string(selectedResult));
         // on-screen message 7
-        fprintf(stderr, "The Scheduler has sent the result to client using TCP over port <%d>\n", TCP_PORT_NUM);
+        fprintf(stderr, "The Scheduler has sent the result to client using TCP over port %d\n", TCP_PORT_NUM);
         
         // update the selected hospital's info and send to the hospital
         updateOccupancy(selectedResult);
