@@ -6,7 +6,7 @@ USCID: 8614237864
 
 # What I have done in the assignment
 1. I built up a TCP connection between the Client and the Scheduler, three UDP connections between the Scheduler and the three hospitals
-2. Read the map.txt (in my code I named the file as map_hard.txt), convert map's informatioin into data structure and stored in the hospitals
+2. Read the map.txt, convert map's informatioin into data structure and stored in the hospitals
 3. Implemented the shortest path algorithm, calculate hospitals' scores based on the given location and assign hospital to client in multiple cases.
 
 
@@ -38,7 +38,7 @@ client to scheduler: fields of class 'SchedulerMain'
 
 2. in scheduler.cpp:
 scheduler to hospitals: fields of class 'HospitalServer', and some functions in the scheduler field
-    scheduler receives <total capacity> & <inital occupancy> from hospitalA, hospitalB and hospitalC
+    scheduler receives <total capacity + inital occupancy> as one string from hospitalA, hospitalB and hospitalC
     scheduler sends <location> to available hospitals
     scheduler receives <score> from available hospitals
     scheduler sends <update information> to selected hospitals
@@ -57,9 +57,10 @@ hospital to scheduler: fields of class 'SchedulerMain'
     hospitalA sends <score> or <location not found message> to scheduler
     hospitalA receives <update information> from scheduler if it has been selected
 
-hospital inside: fields of class "hospital"
+hospital inside: fields of class "Hospital"
     construct and store the map informtaion in local storage
     find and calculate the shortest path of the given location
+
 
 # Any idiosyncrasy of my project
 This project meets all the reqirements of the assignment.

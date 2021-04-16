@@ -143,9 +143,9 @@ class Hospital {
         fprintf(stderr, "Hospital B has capacity = %d, occupation = %d, availability = %g\n", this->capacity, this->occupancy, getAvailability());
         float d;
         int reIndex = getRelocation(location);
-        if (a < 0 || a > 1) a == -1;
+        if (a < 0 || a > 1) a = -1;
         if (reIndex == -1 || location == this->location) d = -1;
-        if (d == -1 || a = -1)  {
+        if (d == -1 || a == -1)  {
             // on-screen message 3
             if (d == -1) fprintf(stderr, "Hospital B does not have the location %d in map\n", location);
             hospitalScore[0] = -1;
@@ -376,7 +376,10 @@ int main(int argc, char* argv[]) {
     SchedulerMain schedulermain;
 
     if (argc < 4) {
-        fprintf(stderr, "you mush input all the three of the hospital, as '<hospital location> <total capacity> <initial occupancy>'\n");
+        fprintf(stderr, "you mush input all the three characters of the hospital, as '<hospital location> <total capacity> <initial occupancy>'\n");
+        exit(0);
+    } else if (argv[1] < 0 || argv[2] < 0 || argv[3] < 0) {
+        fprintf(stderr, "you mush make sure all the three of characters the hospital are valid'\n");
         exit(0);
     }
 

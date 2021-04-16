@@ -97,6 +97,9 @@ int main(int argc, char* argv[]) {
     if (argc < 2) {
         fprintf(stderr, "please enter the location\n");
         exit(0);
+    } else if (argv[1] < 0) {
+        fprintf(stderr, "please enter a valid location\n");
+        exit(0);
     }
     string location = argv[1];
     schedulermain.connectServer();

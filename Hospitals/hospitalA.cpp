@@ -376,7 +376,10 @@ int main(int argc, char* argv[]) {
     SchedulerMain schedulermain;
 
     if (argc < 4) {
-        fprintf(stderr, "you mush input all the three of the hospital, as '<hospital location> <total capacity> <initial occupancy>'\n");
+        fprintf(stderr, "you mush input all the three characters of the hospital, as '<hospital location> <total capacity> <initial occupancy>'\n");
+        exit(0);
+    } else if (argv[1] < 0 || argv[2] < 0 || argv[3] < 0) {
+        fprintf(stderr, "you mush make sure all the three of characters the hospital are valid'\n");
         exit(0);
     }
 
