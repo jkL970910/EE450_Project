@@ -21,7 +21,7 @@ using namespace std;
 #define HOSPITALC_PORT_NUM 32864
 #define UDP_PORT_NUM 33864
 #define HOSTNAME "127.0.0.1"
-#define FILENAME "map_hard.txt"
+#define FILENAME "map.txt"
 #define FLT_MAX 3.402823466e+38F
 
 static string client_location; // message of userid from Scheduler, backend server will give location based on this userid
