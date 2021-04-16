@@ -142,12 +142,12 @@ class Hospital {
         // on-screen message 5
         fprintf(stderr, "Hospital A has capacity = %d, occupation = %d, availability = %g\n", this->capacity, this->occupancy, getAvailability());
         float d;
-        a = (a < 0 || a > 1) ? -1 : a;
         int reIndex = getRelocation(location);
+        if (a < 0 || a > 1) a = -1;
         if (reIndex == -1 || location == this->location) d = -1;
-        if (a == -1 || d == -1)  {
+        if (d == -1 || a == -1)  {
             // on-screen message 3
-            fprintf(stderr, "Hospital A does not have the location %d in map\n", location);
+            if (d == -1) fprintf(stderr, "Hospital A does not have the location %d in map\n", location);
             hospitalScore[0] = -1;
             hospitalScore[1] = -1;
             return; 
@@ -277,6 +277,7 @@ class File {
 };
 
 // UDP connection to Scheduler
+// Referenced UDP model at "Beej's Guide to Network Programming Using Internet Sockets"
 class SchedulerMain {
     private:
     int sockfd;

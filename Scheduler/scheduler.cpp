@@ -34,12 +34,18 @@ static int hospitals[3][2];
 // 0 ~ 2 stands for hospitalA ~ C, [][0] - score, [][1] - distance
 static float hospitalsScore[3][2];
 
+// using a flag to determine whether to communicate with hospital or not
+static bool flagA;
+static bool flagB;
+static bool flagC;
+
 void Error(char* msg) {
     perror(msg);
     exit(0);
 }
 
 // set the local_UDP_addr of the scheduler
+// Referenced UDP model at "Beej's Guide to Network Programming Using Internet Sockets"
 void bind() {
     // local address
     local_addr.sin_family = AF_INET;
@@ -157,6 +163,7 @@ static HospitalServer hospitalA, hospitalB, hospitalC;
 void getHospitalsScore(int location) {
     // first check the current availability of each hospital, then receive the score and distance for avaiable hospitals
     if (hospitals[0][0] > hospitals[0][1]) {
+        flagA = true;
         hospitalA.send(to_string(location));
         fprintf(stderr, "The Scheduler has sent client location to Hospital A using UDP over port %d\n", HOSPITALA_PORT_NUM);
         hospitalA.getScore(0);
@@ -166,32 +173,37 @@ void getHospitalsScore(int location) {
             fprintf(stderr, "The Scheduler has received map information from Hospital A, the score = None and the distance = None\n");
         }
     } else {
+        flagA = false;
         hospitalsScore[0][0] = -1;
     }
     
     if (hospitals[1][0] > hospitals[1][1]) {
+        flagB = true;
         hospitalB.send(to_string(location));
-        fprintf(stderr, "The Scheduler has sent client location to Hospital B using UDP over port <%d>\n", HOSPITALB_PORT_NUM);
+        fprintf(stderr, "The Scheduler has sent client location to Hospital B using UDP over port %d\n", HOSPITALB_PORT_NUM);
         hospitalB.getScore(1);
         if (hospitalsScore[1][0] != -1 && hospitalsScore[1][1] != -1) {
-            fprintf(stderr, "The Scheduler has received map information from Hospital B, the score = <%g> and the distance = <%g>\n", hospitalsScore[1][0], hospitalsScore[1][1]);
+            fprintf(stderr, "The Scheduler has received map information from Hospital B, the score = %g and the distance = %g\n", hospitalsScore[1][0], hospitalsScore[1][1]); 
         } else {
-            fprintf(stderr, "The Scheduler has received map information from Hospital B, the score = <None> and the distance = <None>\n");
+            fprintf(stderr, "The Scheduler has received map information from Hospital B, the score = None and the distance = None\n");
         }
     } else {
+        flagB = false;
         hospitalsScore[1][0] = -1;
     }
     
     if (hospitals[2][0] > hospitals[2][1]) {
+        flagC = true;
         hospitalC.send(to_string(location));
-        fprintf(stderr, "The Scheduler has sent client location to Hospital C using UDP over port <%d>\n", HOSPITALC_PORT_NUM);
+        fprintf(stderr, "The Scheduler has sent client location to Hospital C using UDP over port %d\n", HOSPITALC_PORT_NUM);
         hospitalC.getScore(2);
         if (hospitalsScore[2][0] != -1 && hospitalsScore[2][1] != -1) {
-            fprintf(stderr, "The Scheduler has received map information from Hospital C, the score = <%g> and the distance = <%g>\n", hospitalsScore[2][0], hospitalsScore[2][1]);
+            fprintf(stderr, "The Scheduler has received map information from Hospital C, the score = %g and the distance = %g\n", hospitalsScore[2][0], hospitalsScore[2][1]);
         } else {
-            fprintf(stderr, "The Scheduler has received map information from Hospital C, the score = <None> and the distance = <None>\n");
+            fprintf(stderr, "The Scheduler has received map information from Hospital C, the score = None and the distance = None\n");
         }
     } else {
+        flagC = false;
         hospitalsScore[2][0] = -1;
     }
 }
@@ -218,7 +230,7 @@ int selectHospital() {
         if (highScore == hospitalsScore[1][0]) score = score + 2;
         if (highScore == hospitalsScore[2][0]) score = score + 3;
     }
-    return count;
+    return score;
 }
 
 // selected the hospital with the shortest distance
@@ -246,16 +258,16 @@ int chooseHospital(int selectedLocation) {
 };
 
 void messageConfirm(int selectedResult) {
+    if (selectedResult == -1 || selectedResult == -2) fprintf(stderr, "The Scheduler has assigned None to the client\n");
     if (selectedResult == 0) fprintf(stderr, "The Scheduler has assigned Hospital A to the client\n");
     if (selectedResult == 1) fprintf(stderr, "The Scheduler has assigned Hospital B to the client\n");
     if (selectedResult == 2) fprintf(stderr, "The Scheduler has assigned Hospital C to the client\n");
-    else fprintf(stderr, "The Scheduler has assigned None to the client\n");
 };
 
 void updateHospital(int selectedResult) {
-    hospitalA.send(to_string(selectedResult));
-    hospitalB.send(to_string(selectedResult));
-    hospitalC.send(to_string(selectedResult));
+    if (flagA) hospitalA.send(to_string(selectedResult));
+    if (flagB) hospitalB.send(to_string(selectedResult));
+    if (flagC) hospitalC.send(to_string(selectedResult));
     // on-screen message 8
     if (selectedResult == 0) fprintf(stderr, "The Scheduler has sent the result to Hospital A using UDP over port %d\n", UDP_PORT_NUM);
     if (selectedResult == 1) fprintf(stderr, "The Scheduler has sent the result to Hospital B using UDP over port %d\n", UDP_PORT_NUM);
@@ -270,6 +282,7 @@ void updateOccupancy(int selectedResult) {
 };
 
 // Communicate with client
+// Referenced TCP model at "Beej's Guide to Network Programming Using Internet Sockets"
 class Client {
     private:
     int sockfd, newsockfd, port_num;
