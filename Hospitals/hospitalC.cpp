@@ -112,9 +112,10 @@ class Hospital {
     // BFS method: 
     float shortestPath(int reIndex) {
         queue<int> q;
-        bool visited[hospital_relocation_mapping.size()] = {0};
+        int relocation_size = hospital_relocation_mapping.size();
+        bool visited[relocation_size] = {0};
         tr1::unordered_map<int, float> distance;
-        for (int i = 0; i < hospital_relocation_mapping.size(); i++) {
+        for (int i = 0; i < relocation_size; i++) {
             distance[i] =  FLT_MAX;
         }
         distance[reIndex] = 0;
@@ -361,7 +362,7 @@ class SchedulerMain {
             receiveSchedulerMessages();
             int chosen = atoi(buffer);
 
-            if (chosen == 1) {
+            if (chosen == 2) {
                 hospital.updateOccupancy();
             }
         }

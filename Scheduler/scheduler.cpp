@@ -131,7 +131,7 @@ class HospitalServer {
         }
     }
 
-    float getScore(int count) {
+    void getScore(int count) {
         bzero(buffer, 256);
         receive();
         int i = 0;
@@ -203,22 +203,22 @@ int selectHospital() {
     if (highScore == -1) return -1;
     
     int count = 0;
+    int score = 0;
     for (int i = 0; i < 3; i++) {
         if (highScore == hospitalsScore[i][0]) count = count + 1;
     }
     // check if there are multiple tied scores
     if (count == 1) {
-        if (highScore == hospitalsScore[0][0]) return 0;
-        if (highScore == hospitalsScore[1][0]) return 1;
-        if (highScore == hospitalsScore[2][0]) return 2;
+        if (highScore == hospitalsScore[0][0]) score = 0;
+        if (highScore == hospitalsScore[1][0]) score = 1;
+        if (highScore == hospitalsScore[2][0]) score = 2;
     } else {
-        count = 0;
         // 1 + 2 = 3, 1 + 3 = 4, 2 + 3 = 5, 1 + 2 + 3 = 6 --> all the multiple cases
-        if (highScore == hospitalsScore[0][0]) count = count + 1;
-        if (highScore == hospitalsScore[1][0]) count = count + 2;
-        if (highScore == hospitalsScore[2][0]) count = count + 3;
-        return count;
+        if (highScore == hospitalsScore[0][0]) score = score + 1;
+        if (highScore == hospitalsScore[1][0]) score = score + 2;
+        if (highScore == hospitalsScore[2][0]) score = score + 3;
     }
+    return count;
 }
 
 // selected the hospital with the shortest distance

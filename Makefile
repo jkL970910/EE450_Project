@@ -24,10 +24,10 @@ compile_scheduler: scheduler.cpp
 compile_hospitalA: hospitalA.cpp
 	@$(CC) $(CFLAGS) -o hospitalA $^
 
-compile_hospitalA: hospitalB.cpp
+compile_hospitalB: hospitalB.cpp
 	@$(CC) $(CFLAGS) -o hospitalB $^
 
-compile_hospitalA: hospitalC.cpp
+compile_hospitalC: hospitalC.cpp
 	@$(CC) $(CFLAGS) -o hospitalC $^
 
 compile_client: client.cpp
