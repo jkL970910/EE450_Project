@@ -234,6 +234,7 @@ int selectHospital() {
 }
 
 // selected the hospital with the shortest distance
+// 0 -> hospital A, 1 -> B, 2 -> C, 3 -> A & B, 4 -> A & C, 5 -> B & C, 6 -> A & B & C
 int chooseHospital(int selectedLocation) {
     int result;
     switch(selectedLocation) {

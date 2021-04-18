@@ -24,7 +24,6 @@ using namespace std;
 #define FILENAME "map.txt"
 #define FLT_MAX 3.402823466e+38F
 
-static string client_location; // message of userid from Scheduler, backend server will give location based on this userid
 static float hospitalScore[2]; // [0] stands for the score. [1] for the distances.
 
 class Hospital {
@@ -359,7 +358,7 @@ class SchedulerMain {
             else fprintf(stderr, "Hospital B has sent score = %g and distance = %g to the Scheduler\n", hospitalScore[0], hospitalScore[1]);
 
             // receive the scheduler's response and update the map
-            // 1 stands for the hospital has been selected, 0 for not
+            // chosen stands for whether the hospital has been selected, 0 for hospital A, 1 for B, 2 for C
             receiveSchedulerMessages();
             int chosen = atoi(buffer);
 
@@ -376,10 +375,10 @@ int main(int argc, char* argv[]) {
     SchedulerMain schedulermain;
 
     if (argc < 4) {
-        fprintf(stderr, "you mush input all the three characters of the hospital, as '<hospital location> <total capacity> <initial occupancy>'\n");
+        fprintf(stderr, "you must input all the three characters of the hospital, as '<hospital location> <total capacity> <initial occupancy>'\n");
         exit(0);
     } else if (argv[1] < 0 || argv[2] < 0 || argv[3] < 0) {
-        fprintf(stderr, "you mush make sure all the three of characters the hospital are valid'\n");
+        fprintf(stderr, "you must make sure all the three characters of the hospital are valid'\n");
         exit(0);
     }
 

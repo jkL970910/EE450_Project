@@ -14,7 +14,7 @@
 #define HOSTNAME "127.0.0.1"
 using namespace std;
 
-// Referenced UDP model at "Beej's Guide to Network Programming Using Internet Sockets"
+// Referenced TCP model at "Beej's Guide to Network Programming Using Internet Sockets"
 class SchedulerMain {
     private:
     int sockfd, port_num; // sockfd == sock file descriptor
