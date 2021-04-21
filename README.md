@@ -1,6 +1,6 @@
 # USC-EE450-Project Description
 # Author
-Full Name: Jiekun Liu
+Full Name: Jiekun Liu  
 USCID: 8614237864
 
 
@@ -11,13 +11,12 @@ USCID: 8614237864
 
 
 # What my code files are and what each one of them does
-In hospitalA.cpp:
-1. the hospitalX.cpp first read and convert data in map.txt into local storage, re-index the locations (in tr1::unordered_map<int, int> hospital_relocation_mapping).
+In hospitalA.cpp: (PS: the hospitalB.cpp and hospitalC.cpp are almost the same code as hospitalA.cpp, the only difference between them is the assigned UDP port number and their initial input availability)  
+1. the hospitalA.cpp first read and convert data in map.txt into local storage, re-index the locations (in tr1::unordered_map<int, int> hospital_relocation_mapping).
 2. build up the map data structure, store the neighbors of each edges and their distances (in tr1::unordered_map<int, tr1::unordered_map<int, float> > matrix).
-3. build up a UDP connection with the Scheduler, tell him the initial capacity and occupancy of the hospital.
+3. build up a UDP connection with the Scheduler, tell him the initial capacity and occupancy of the hospitalA.
 4. calculate the shortest path for the given client's location using BFS, and return the score to the Scheduler.
-5. receive the update message from the scheduler and to update the hospital's availability if necessary.  
-PS: the hospitalB.cpp and hospitalC.cpp are almost the same code as hospitalA.cpp, the only difference between them is the assigned UDP port number and their initial input availability.
+5. receive the update message from the scheduler and update the hospitalA's availability if necessary.  
 
 In scheduler.cpp:
 1. build up UDP connections with the three hospitals, receive and store their initial availabilities in local storage (in int hospitals[3][2]).
@@ -31,39 +30,39 @@ In client.cpp:
 
 
 # The format of all the messages exchanged
-1. in client.cpp:
-client to scheduler: fields of class 'SchedulerMain'
-    client sends <location> to scheduler
-    client receives <hospital/None> from scheduler
+In client.cpp:  
+1. client to scheduler: fields of class 'SchedulerMain'  
+    client sends <location> to scheduler  
+    client receives <hospital/None> from scheduler  
 
-2. in scheduler.cpp:
-scheduler to hospitals: fields of class 'HospitalServer', and some functions in the scheduler field
-    scheduler receives <total capacity + inital occupancy> as one string from hospitalA, hospitalB and hospitalC
-    scheduler sends <location> to available hospitals
-    scheduler receives <score> from available hospitals
-    scheduler sends <update information> to selected hospitals
+In scheduler.cpp:  
+1. scheduler to hospitals: fields of class 'HospitalServer', and some functions in the scheduler field  
+    scheduler receives <total capacity + inital occupancy> as one string from hospitalA, hospitalB and hospitalC  
+    scheduler sends <location> to available hospitals  
+    scheduler receives <score> from available hospitals  
+    scheduler sends <update information> to selected hospitals  
 
-scheduler to client: fields of class 'Client'
-    scheduler receives <location> from client
-    scheduler sends <selected hospital / None> to client
+2. scheduler to client: fields of class 'Client'  
+    scheduler receives <location> from client  
+    scheduler sends <selected hospital / None> to client  
 
-3. in hospitalA.cpp: (hospitalB.cpp and hospitalC.cpp are the same)
-hospital reads map.txt: fields of class 'File'
-    hospitalA read the map.txt and construct a map
+In hospitalA.cpp: (hospitalB.cpp and hospitalC.cpp are the same)  
+1. hospital reads map.txt: fields of class 'File'  
+    hospitalA read the map.txt and construct a map  
 
-hospital to scheduler: fields of class 'SchedulerMain'
-    hospitalA sends its inital <capacity> and <occupancy> to scheduler
-    hospitalA receives <location> from scheduler
-    hospitalA sends <score> or <location not found message> to scheduler
-    hospitalA receives <update information> from scheduler if it has been selected
+2. hospital to scheduler: fields of class 'SchedulerMain'  
+    hospitalA sends its inital <capacity + occupancy> to scheduler  
+    hospitalA receives <location> from scheduler  
+    hospitalA sends <score> or <location not found message> to scheduler  
+    hospitalA receives <update information> from scheduler and determines whether it needs to be updated  
 
-hospital inside: fields of class "Hospital"
-    construct and store the map informtaion in local storage
-    find and calculate the shortest path of the given location
+3. hospital inside: fields of class "Hospital"  
+    construct and store the map informtaion in local storage  
+    find and calculate the shortest path of the given location  
 
 
 # Any idiosyncrasy of my project
-This project meets all the reqirements of the assignment.
+This project meets all the reqirements of the assignment.  
 PS: New client/server process is unable to use the same port unless zombie process is killed
 
 
