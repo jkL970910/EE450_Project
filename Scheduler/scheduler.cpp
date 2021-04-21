@@ -177,6 +177,7 @@ void getHospitalsScore(int location) {
     } else {
         flagA = false;
         hospitalsScore[0][0] = -1;
+        hospitalsScore[0][1] = 0;
     }
     
     if (hospitals[1][0] > hospitals[1][1]) {
@@ -192,6 +193,7 @@ void getHospitalsScore(int location) {
     } else {
         flagB = false;
         hospitalsScore[1][0] = -1;
+        hospitalsScore[1][1] = 0;
     }
     
     if (hospitals[2][0] > hospitals[2][1]) {
@@ -207,6 +209,7 @@ void getHospitalsScore(int location) {
     } else {
         flagC = false;
         hospitalsScore[2][0] = -1;
+        hospitalsScore[2][1] = 0;
     }
 }
 
@@ -389,8 +392,8 @@ int main() {
 
         // determine which hospital to be selected
         int selectedResult;
-        // if all the hospital distances are -1, the client location is not on the map 
-        if (hospitalsScore[0][1] == -1 && hospitalsScore[1][1] == -1 && hospitalsScore[2][1] == -1) selectedResult = -2;
+        // if all the hospital distances are -2, the client location is not on the map 
+        if (hospitalsScore[0][1] == -2 || hospitalsScore[1][1] == -2 || hospitalsScore[2][1] == -2) selectedResult = -2;
         // if one hospital distance is -1, the client is on that hospital, score = None
         else if (hospitalsScore[0][1] == -1 || hospitalsScore[1][1] == -1 || hospitalsScore[2][1] == -1) selectedResult = -1;
         else {

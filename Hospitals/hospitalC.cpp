@@ -12,8 +12,6 @@
 #include <errno.h>
 #include <tr1/unordered_map>
 #include <vector>
-#include <set>
-#include <unordered_set>
 #include <queue>
 #include <iostream>
 using namespace std;
