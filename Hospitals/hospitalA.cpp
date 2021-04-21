@@ -45,7 +45,7 @@ class Hospital {
         fprintf(stderr, "Hospital A has been assigned to a client, occupation is updated to %d, avaliability is updated to %g\n", this->occupancy, getAvailability());
     }
 
-    void setInfo(int location, int capacity, char occupancy) {
+    void setInfo(int location, int capacity, int occupancy) {
         this -> location = location;
         this -> re_location = getRelocation(location);
         this -> capacity = capacity;
@@ -114,6 +114,10 @@ class Hospital {
     // implement the Dijk algorithm using BFS method: 
     // the input is the reIndex of the client's location
     float shortestPath(int reIndex) {
+        // first to check whether the client is on the hospital location
+        if (reIndex == this->re_location) {
+        	return -1;
+        } 
         queue<int> q;
         int relocation_size = hospital_relocation_mapping.size();
         bool visited[relocation_size] = {0};
@@ -144,24 +148,30 @@ class Hospital {
     void findLocationScore(int location) {
         float a = getAvailability();
         // on-screen message 5
-        fprintf(stderr, "Hospital A has capacity = %d, occupation = %d, availability = %g\n", this->capacity, this->occupancy, getAvailability());
+        fprintf(stderr, "Hospital A has capacity = %d, occupation = %d, availability = %g\n", this->capacity, this->occupancy, a);
         float d;
         int reIndex = getRelocation(location);
         if (a < 0 || a > 1) a = -1;
-        if (reIndex == -1 || location == this->location) d = -1;
+        if (reIndex == -1) d = -1;
         if (d == -1 || a == -1)  {
             // on-screen message 3
             if (d == -1) fprintf(stderr, "Hospital A does not have the location %d in map\n", location);
             hospitalScore[0] = -1;
-            hospitalScore[1] = -1;
+            hospitalScore[1] = -2;
             return; 
         }
         hospitalScore[1] = shortestPath(reIndex);
         // on-screen message 6
-        fprintf(stderr, "Hospital A has found the shortest path to client, distance = %g\n", hospitalScore[1]);
-        hospitalScore[0] = 1 / (hospitalScore[1] * (1.1 - a));
-        // on-screen message 7
-        fprintf(stderr, "Hospital A has the score = %g\n", hospitalScore[0]);
+        if (hospitalScore[1] > 0) {
+            fprintf(stderr, "Hospital A has found the shortest path to client, distance = %g\n", hospitalScore[1]);
+            hospitalScore[0] = 1 / (hospitalScore[1] * (1.1 - a));
+            // on-screen message 7 case 1: location is legal, and get the shortest path and score
+            fprintf(stderr, "Hospital A has the score = %g\n", hospitalScore[0]);
+        } else {
+            hospitalScore[0] = -1;
+            // on-screen message 7 case 2: location is the same as hospital, set score = None.
+            fprintf(stderr, "Hospital A has the score = None\n");
+        }
     }
 };
 
@@ -359,8 +369,9 @@ class SchedulerMain {
 
             // send the score to the scheduler
             sendHospitalMessages(returnMessage);
-            // on-screen message 4/8
-            if (hospitalScore[1] == -1) fprintf(stderr, "Hospital A has sent 'location not found' to the Scheduler\n");
+            // on-screen message 4/8: three cases
+            if (hospitalScore[1] == -2) fprintf(stderr, "Hospital A has sent 'location not found' to the Scheduler\n");
+            else if (hospitalScore[1] == -1) fprintf(stderr, "Hospital A has sent score = None and distance = None to the Scheduler\n");
             else fprintf(stderr, "Hospital A has sent score = %g and distance = %g to the Scheduler\n", hospitalScore[0], hospitalScore[1]);
 
             // receive the scheduler's response and update the map

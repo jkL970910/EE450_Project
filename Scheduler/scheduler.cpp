@@ -169,7 +169,7 @@ void getHospitalsScore(int location) {
         hospitalA.send(to_string(location));
         fprintf(stderr, "The Scheduler has sent client location to Hospital A using UDP over port %d\n", HOSPITALA_PORT_NUM);
         hospitalA.getScore(0);
-        if (hospitalsScore[0][0] != -1 && hospitalsScore[0][1] != -1) {
+        if (hospitalsScore[0][0] > 0 && hospitalsScore[0][1] > 0) {
             fprintf(stderr, "The Scheduler has received map information from Hospital A, the score = %g and the distance = %g\n", hospitalsScore[0][0], hospitalsScore[0][1]);
         } else {
             fprintf(stderr, "The Scheduler has received map information from Hospital A, the score = None and the distance = None\n");
@@ -184,7 +184,7 @@ void getHospitalsScore(int location) {
         hospitalB.send(to_string(location));
         fprintf(stderr, "The Scheduler has sent client location to Hospital B using UDP over port %d\n", HOSPITALB_PORT_NUM);
         hospitalB.getScore(1);
-        if (hospitalsScore[1][0] != -1 && hospitalsScore[1][1] != -1) {
+        if (hospitalsScore[1][0] > 0 && hospitalsScore[1][1] > 0) {
             fprintf(stderr, "The Scheduler has received map information from Hospital B, the score = %g and the distance = %g\n", hospitalsScore[1][0], hospitalsScore[1][1]); 
         } else {
             fprintf(stderr, "The Scheduler has received map information from Hospital B, the score = None and the distance = None\n");
@@ -199,7 +199,7 @@ void getHospitalsScore(int location) {
         hospitalC.send(to_string(location));
         fprintf(stderr, "The Scheduler has sent client location to Hospital C using UDP over port %d\n", HOSPITALC_PORT_NUM);
         hospitalC.getScore(2);
-        if (hospitalsScore[2][0] != -1 && hospitalsScore[2][1] != -1) {
+        if (hospitalsScore[2][0] > 0 && hospitalsScore[2][1] > 0) {
             fprintf(stderr, "The Scheduler has received map information from Hospital C, the score = %g and the distance = %g\n", hospitalsScore[2][0], hospitalsScore[2][1]);
         } else {
             fprintf(stderr, "The Scheduler has received map information from Hospital C, the score = None and the distance = None\n");
