@@ -77,6 +77,7 @@ class HospitalServer {
         }
     }
 
+    // send message via UDP
     void send(string message) {
         char hospital_message[message.length()];
         strcpy(hospital_message, message.c_str());
@@ -87,6 +88,7 @@ class HospitalServer {
         }
     }
 
+    // receive message via UDP
     void receive() {   
         bzero(&buffer,256);
         int res = recvfrom(sockfd, buffer, 256, 0, (sockaddr*)&remote_addr, &sockaddr_in_length);
@@ -387,7 +389,10 @@ int main() {
 
         // determine which hospital to be selected
         int selectedResult;
-        if (hospitalsScore[0][1] == -1 || hospitalsScore[1][1] == -1 || hospitalsScore[2][1] == -1) selectedResult = -2;
+        // if all the hospital distances are -1, the client location is not on the map 
+        if (hospitalsScore[0][1] == -1 && hospitalsScore[1][1] == -1 && hospitalsScore[2][1] == -1) selectedResult = -2;
+        // if one hospital distance is -1, the client is on that hospital, score = None
+        else if (hospitalsScore[0][1] == -1 || hospitalsScore[1][1] == -1 || hospitalsScore[2][1] == -1) selectedResult = -1;
         else {
             int selectedLocation = selectHospital();
             selectedResult = chooseHospital(selectedLocation);

@@ -32,7 +32,7 @@ class SchedulerMain {
 
     public:
     void connectServer() {
-        // set port number
+        // set remote port number
         port_num = TCP_PORT_NUM;
 
         // create socket
@@ -83,8 +83,12 @@ class SchedulerMain {
         // on-screen message 3 / errors
         int result = atoi(buffer);
         switch(result) {
-            case -2: fprintf(stderr, "Location %s not found\n", message.c_str()); break;
-            case -1: fprintf(stderr, "Score = None, No assignment\n"); break;
+            case -2: 
+	           fprintf(stderr, "The client has received results from the Scheduler: assigned to Hospital None\n"); 
+	           fprintf(stderr, "Location %s not found\n", message.c_str()); break;
+            case -1: 
+	           fprintf(stderr, "The client has received results from the Scheduler: assigned to Hospital None\n"); 
+	           fprintf(stderr, "Score = None, No assignment\n"); break;
             case 0: fprintf(stderr, "The client has received results from the Scheduler: assigned to Hospital A\n"); break;
             case 1: fprintf(stderr, "The client has received results from the Scheduler: assigned to Hospital B\n"); break;
             case 2: fprintf(stderr, "The client has received results from the Scheduler: assigned to Hospital C\n"); break;
@@ -102,6 +106,10 @@ int main(int argc, char* argv[]) {
         exit(0);
     }
     string location = argv[1];
+
+    // bind socket and connect to Scheduler
     schedulermain.connectServer();
+
+    // start query for the input client location
     schedulermain.queryHospital(location);
 }

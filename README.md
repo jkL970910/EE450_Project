@@ -16,7 +16,7 @@ In hospitalA.cpp:
 2. build up the map data structure, store the neighbors of each edges and their distances (in tr1::unordered_map<int, tr1::unordered_map<int, float> > matrix).
 3. build up a UDP connection with the Scheduler, tell him the initial capacity and occupancy of the hospital.
 4. calculate the shortest path for the given client's location using BFS, and return the score to the Scheduler.
-5. receive the update message from the scheduler and to update the hospital's availability if necessary.
+5. receive the update message from the scheduler and to update the hospital's availability if necessary.  
 PS: the hospitalB.cpp and hospitalC.cpp are almost the same code as hospitalA.cpp, the only difference between them is the assigned UDP port number and their initial input availability.
 
 In scheduler.cpp:

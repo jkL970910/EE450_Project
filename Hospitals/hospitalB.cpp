@@ -24,12 +24,13 @@ using namespace std;
 #define FILENAME "map.txt"
 #define FLT_MAX 3.402823466e+38F
 
+// using an array to store the location score calculated by the hospital
 static float hospitalScore[2]; // [0] stands for the score. [1] for the distances.
 
 class Hospital {
     private:
     int location; // the location on the map
-    int re_location;
+    int re_location; // re-index of the location
     int capacity; // initial capacity of the hospital
     int occupancy; // inital occupancy of the hospital
     
@@ -49,9 +50,11 @@ class Hospital {
         this -> re_location = getRelocation(location);
         this -> capacity = capacity;
         this -> occupancy = occupancy;
+        // on-screen message 1, line 2
         fprintf(stderr, "Hospital B has total capacity %d and initial occupancy %d\n", capacity, occupancy);
     }
 
+    // construct the message that sent to the scheduler
     string getHospitalInfo() {
         return to_string(this->capacity) + " " + to_string(this->occupancy);
     }
@@ -108,11 +111,13 @@ class Hospital {
         return (this->capacity - this->occupancy) / (float)this->capacity;
     }
 
-    // BFS method: 
+    // implement the Dijk algorithm using BFS method: 
+    // the input is the reIndex of the client's location
     float shortestPath(int reIndex) {
         queue<int> q;
         int relocation_size = hospital_relocation_mapping.size();
         bool visited[relocation_size] = {0};
+        // using a map to store the shortest distance of each location
         tr1::unordered_map<int, float> distance;
         for (int i = 0; i < relocation_size; i++) {
             distance[i] =  FLT_MAX;
@@ -186,11 +191,12 @@ class File {
         setFileSize(fp);
     }
 
-    // CLose map.txt
+    // Close map.txt
     void close() {
         fclose(fp);
     }
     
+    // read each line and convert it to two nums: location1 & location2
     void bufferToLocationNum(char* s, int* locationNum) {
         int i = 0;
         string str;
@@ -241,7 +247,7 @@ class File {
             if (buffer[i] == ' ') {
                 if (str.length() != 0) { // the blank is at the end of a string
                     if (num < 2) single_row_location_info[num++] = atoi(str.c_str()); // first two as edges
-                    else single_row_location_distance[0] = atof(str.c_str()); // the thrid as distance
+                    else single_row_location_distance[0] = atof(str.c_str()); // the third as distance
                     str = "";
                 }
             } else {
@@ -317,12 +323,12 @@ class SchedulerMain {
         local_sockaddr_length = sizeof(local_addr);
         bzero(&local_addr, local_sockaddr_length);
 
-        // remote address
+        // remote address: the scheduler
         remote_addr.sin_family = AF_INET;
         remote_addr.sin_port = htons(UDP_PORT_NUM);
         remote_addr.sin_addr.s_addr = inet_addr(HOSTNAME);
 
-        // local address
+        // local address: the hospital
         local_addr.sin_family = AF_INET;
         local_addr.sin_port = htons(HOSPITALB_PORT_NUM);
         local_addr.sin_addr.s_addr = inet_addr(HOSTNAME);
@@ -343,7 +349,7 @@ class SchedulerMain {
             receiveSchedulerMessages();
             int location = atoi(buffer);
 
-            // using BFS to find the shortest location score
+            // find the shortest location score
             // socre = -1 stands for score = None
             // on-screen message 2
             fprintf(stderr, "Hospital B has received input from client at location %d\n", location);
@@ -382,7 +388,7 @@ int main(int argc, char* argv[]) {
         exit(0);
     }
 
-    // on-screen message 1
+    // on-screen message 1, line 1
     fprintf(stderr, "Hospital B is up and running using UDP on port %d\n", HOSPITALB_PORT_NUM);
 
     // construct the map and store in hospitalB
