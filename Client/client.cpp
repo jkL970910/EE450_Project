@@ -10,9 +10,10 @@
 #include <string.h>
 #include <string>
 #include <iostream>
+using namespace std;
+
 #define TCP_PORT_NUM 34864
 #define HOSTNAME "127.0.0.1"
-using namespace std;
 
 // Referenced TCP model at "Beej's Guide to Network Programming Using Internet Sockets"
 class SchedulerMain {

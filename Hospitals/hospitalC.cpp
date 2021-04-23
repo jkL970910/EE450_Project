@@ -37,12 +37,14 @@ class Hospital {
 
     public:
     // preparation: store and construct the map.txt
+    // update the occupancy if been assigned
     void updateOccupancy() {
         this -> occupancy = this -> occupancy + 1;
         // on-screen message 9
         fprintf(stderr, "Hospital C has been assigned to a client, occupation is updated to %d, avaliability is updated to %g\n", this->occupancy, getAvailability());
     }
 
+    // set the initial information of this hospital
     void setInfo(int location, int capacity, int occupancy) {
         this -> location = location;
         this -> re_location = getRelocation(location);
@@ -52,7 +54,7 @@ class Hospital {
         fprintf(stderr, "Hospital C has total capacity %d and initial occupancy %d\n", capacity, occupancy);
     }
 
-    // construct the message that sent to the scheduler
+    // construct the message that sent to the scheduler, format: "capacity occupancy"
     string getHospitalInfo() {
         return to_string(this->capacity) + " " + to_string(this->occupancy);
     }
@@ -83,7 +85,8 @@ class Hospital {
         return re_location;
     }
 
-    // set up the matrix with the re-indexs of locations
+    // set up the matrix with the re-indexs of locations line by line from the map.txt
+    // for each line, s_r_l_info contains the edge 1's and edge 2's location, s_r_l_distance contains their distance
     void setAjacencyMatrixbyRow(int* single_row_location_info, float* single_row_location_distance) {
         int index_first = single_row_location_info[0];
         int index_second = single_row_location_info[1];
@@ -92,7 +95,7 @@ class Hospital {
         int re_index_first = getRelocation(index_first);
         int re_index_second = getRelocation(index_second);
         
-        // map<int, map<int, float>>
+        // map<int, map<int, float>>, each line between two edges will only been inserted once
         if (matrix[re_index_first].find(re_index_second) == matrix[re_index_first].end()) {
             matrix[re_index_first].insert(pair<int, float>(re_index_second, distance));
         }
@@ -105,6 +108,7 @@ class Hospital {
         setInfo(atoi(argv[1]), atoi(argv[2]), atoi(argv[3]));
     }
 
+    // calculate the availability by the given format
     float getAvailability() {
         return (this->capacity - this->occupancy) / (float)this->capacity;
     }

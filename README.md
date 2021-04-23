@@ -30,6 +30,8 @@ In client.cpp:
 
 
 # The format of all the messages exchanged
+All the messages below are stored in char array.  
+
 In client.cpp:  
 1. client to scheduler: fields of class 'SchedulerMain'  
     client sends <location> to scheduler  
